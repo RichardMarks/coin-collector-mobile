@@ -5,7 +5,6 @@ proc commandPanel*(): tuple[y: int, x: int] =
   echo "Enter Coordinate To Check(Y,X): "
   while true:
     let yxInput = readLine(stdin)
-    echo "you entered: ", yxInput
 
     if (find(yxInput , "(") != -1 or find(yxInput , ")") != -1):
       echo "please enter only comma separated numbers"
@@ -18,6 +17,7 @@ proc commandPanel*(): tuple[y: int, x: int] =
       echo "please only enter two values, a letter and a number"
       continue
 
+    # fails if sepValues[1] is a non-alphanumeric character, e.g., "$,%,^"
     let yVal = int(yxInput[0])
     let xVal = parseInt(strip(sepValues[1], true))
 
