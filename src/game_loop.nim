@@ -9,9 +9,6 @@ from header_renderer import renderHeader
 
 include game_data
 
-# proc renderHeader(game:GameData) =
-#   echo "lives: $1, coins: $2" % [$game.lives, $game.coins]
-
 proc runGameLoop*() =
   ## runs the game session logic loop
   updateGameState((lives: 3, coins: 0, board: defaultBoard()))
