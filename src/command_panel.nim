@@ -1,10 +1,9 @@
-import strutils
-import typetraits
+from strutils import rsplit, parseInt, strip, find, toUpperAscii
 
-proc commandPanel*(): tuple[y: int, x: int] =
+proc renderCommandPanel*(): tuple[y: int, x: int] =
   echo "Enter Coordinate To Check(Y,X): "
   while true:
-    let yxInput = readLine(stdin)
+    let yxInput = readLine(stdin).toUpperAscii
 
     if (find(yxInput , "(") != -1 or find(yxInput , ")") != -1):
       echo "please enter only comma separated numbers"
@@ -29,10 +28,10 @@ proc commandPanel*(): tuple[y: int, x: int] =
       echo "X must be between 0 and 9"
       continue
 
+    result = (yVal - 65, xVal)
+    break
 
-    return (yVal - 65, xVal)
+when isMainModule:
 
-
-let test = commandPanel()
-
-echo "test:", test
+  let test = renderCommandPanel()
+  echo "test:", test
