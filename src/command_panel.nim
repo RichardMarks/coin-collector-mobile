@@ -1,7 +1,9 @@
 from strutils import rsplit, parseInt, strip, find, toUpperAscii
 
-proc renderCommandPanel*(): tuple[y: int, x: int] =
-  echo "Enter Coordinate To Check(Y,X): "
+include game_data
+
+proc renderCommandPanel*(): GameCoordinate =
+  stdout.write "Enter Coordinate To Check(Y,X): "
   while true:
     let yxInput = readLine(stdin).toUpperAscii
 
@@ -23,15 +25,14 @@ proc renderCommandPanel*(): tuple[y: int, x: int] =
     if (yVal < 65 or yVal > 74):
       echo "Y must be between A and J"
       continue
-    
+
     if (xVal < 0 or xVal > 9):
       echo "X must be between 0 and 9"
       continue
 
-    result = (yVal - 65, xVal)
+    result = (xVal, yVal - 65)
     break
 
 when isMainModule:
-
   let test = renderCommandPanel()
   echo "test:", test
