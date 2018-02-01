@@ -4,7 +4,7 @@ from terminal import setForegroundColor,
                      ForegroundColor,
                      BackgroundColor
 
-proc boardRenderer*(board: array[100, char]) =
+proc renderBoard*(board: array[100, char]) =
   ## Takes the 10x10 char board array as input and
   ## outputs the board display to stdout
   setForegroundColor(fgWhite)
@@ -55,4 +55,4 @@ when isMainModule:
     'S','S','S','S','S','S','S','S','S','S'
   ]
 
-  boardRenderer(board)
+  renderBoard(board)
