@@ -3,10 +3,36 @@ import strutils
 import times
 import math
 import strfmt
+import streams
+import os
 
 import sdl2
 import sdl2.image
 import sdl2.ttf
+
+const resourceDirectory = "resources"
+when defined(packed):
+  template readRW(filename: string): ptr RWops =
+    const file = staticRead(resourceDirectory / filename)
+    rwFromConstMem(file.cstring, file.len)
+
+  template readStream(filename: string): Stream =
+    const file = staticRead(resourceDirectory / filename)
+    newStringStream(file)
+else:
+  const localResourceDirectory = getAppDir() / resourceDirectory
+
+  template readRW(filename: string): ptr RWops =
+    var rw = rwFromFile(cstring(localResourceDirectory / filename), "r")
+    sdlFailIf(rw.isNil):
+      "Failed to load file " & filename
+    rw
+
+  template readStream(filename: string): Stream =
+    var stream = newFileStream(localResourceDirectory / filename)
+    if stream.isNil:
+      raise ValueError.newException("Failed to load file " & filename)
+    stream
 
 type SDLException = object of Exception
 
@@ -134,32 +160,33 @@ proc newPlayer(texture: TexturePtr): Player =
   result.time = newTime()
   result.restartPlayer()
 
-proc newMap(texture: TexturePtr, file: string): Map =
+proc newMap(texture: TexturePtr, map: Stream): Map =
   new result
   result.texture = texture
   result.tiles = @[]
 
-  for line in file.lines:
+  var line = ""
+  while map.readLine(line):
     var width = 0
     for word in line.split(' '):
       if word == "": continue
       let value = parseUInt(word)
       if value > uint(uint8.high):
-        raise ValueError.newException("Invalid value " & word & " in map " & file)
+        raise ValueError.newException("Invalid value in map: " & word)
       result.tiles.add value.uint8
       inc width
     if result.width > 0 and result.width != width:
-      raise ValueError.newException("Incompatible line length in map " & file)
+      raise ValueError.newException("Incompatible line length in map " & $width)
     result.width = width
     inc result.height
 
 proc newGame(renderer: RendererPtr): Game =
   new result
   result.renderer = renderer
-  result.player = newPlayer(renderer.loadTexture("player.png"))
-  result.map = newMap(renderer.loadTexture("grass.png"), "default.map")
+  result.player = newPlayer(renderer.loadTexture_RW(readRW("player.png"), freesrc = 1))
+  result.map = newMap(renderer.loadTexture_RW(readRW("grass.png"), freesrc = 1), readStream("default.map"))
   result.camera = newCamera()
-  result.font = openFont("DejaVuSans.ttf", 24)
+  result.font = openFontRW(readRW("DejaVuSans.ttf"), freesrc = 1, 24)
   sdlFailIf(result.font.isNil):
     "Failed to load font"
 
