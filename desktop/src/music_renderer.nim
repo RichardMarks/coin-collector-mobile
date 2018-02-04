@@ -1,26 +1,40 @@
 import sdl2/mixer
 
-proc startBGM*(): MusicPtr =
-  var
-    audio_buffers: cint = 4096
-    audio_channels: cint = 2
-    bgm: MusicPtr
+type
+  BackgroundMusic = ref object
+    music: MusicPtr
     channel: cint
-    audio_rate: cint
-    audio_format: uint16
+    stopped: bool
 
-  if mixer.openAudio(audio_rate, audio_format, audio_channels, audio_buffers) != 0:
-    quit("There was a problem")
-  
-  bgm = mixer.loadMUS("../audio_files/bgm.ogg")
-  if isNil(bgm):
-    quit("Unable to load sound file")
-  
-  channel = mixer.playMusic(bgm, -1); #ogg/flac
-  if channel == -1:
-    quit("Unable to play sound")
+proc newBackgroundMusic(): BackgroundMusic =
+  new result
+  result.stopped = false
+  result.music = nil
 
+var bgm: BackgroundMusic = newBackgroundMusic()
+const BYTES_USED_PER_OUTPUT_SAMPLE = 4096
+const AUDIO_CHANNELS = 2 # stereo
+const AUDIO_FORMAT = MIX_DEFAULT_FORMAT
+const FREQUENCY = MIX_DEFAULT_FREQUENCY
+const LOOPING_PLAYBACK = -1 # 0 for single play
 
-proc stopBGM*(bgm: MusicPtr): int =
-  mixer.freeMusic(bgm) #clear ogg
+proc startBGM*() =
+  if mixer.openAudio(FREQUENCY, AUDIO_FORMAT, AUDIO_CHANNELS, BYTES_USED_PER_OUTPUT_SAMPLE) != 0:
+    quit("Failed to open audio")
+
+  bgm.music = mixer.loadMUS("../audio_files/bgm.ogg")
+
+  if isNil(bgm.music):
+    quit("Unable to load bgm file")
+
+  bgm.channel = mixer.playMusic(bgm.music, LOOPING_PLAYBACK);
+  if bgm.channel < 0:
+    quit("Unable to play bgm")
+
+proc stopBGM*() =
+  if bgm.stopped:
+    return
+  mixer.freeMusic(bgm.music)
   mixer.closeAudio()
+  bgm.stopped = true
+  bgm.music = nil

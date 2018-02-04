@@ -85,13 +85,14 @@ proc getTile(map: Map, x,y: int): uint8 =
 
 proc getTile(map: Map, pos: Point2d): uint8 =
   map.getTile(pos.x.round.int, pos.y.round.int)
-  
+
 proc logic(game: Game, tick: int) =
   template time: expr = game.player.time
   case game.map.getTile(game.player.pos)
   of start:
     time.begin = tick
   of finish:
+    stopBGM()
     if time.begin >= 0:
       time.finish = tick - time.begin
       time.begin = -1
@@ -178,10 +179,10 @@ proc newMap(texture: TexturePtr, file: string): Map =
     inc result.height
 
 proc renderMap(renderer: sdl2.RendererPtr, map: Map, camera: Vector2d) =
-  var 
+  var
     clip = rect(0, 0, tileSize.x, tileSize.y)
     dest = rect(0, 0, tileSize.x, tileSize.y)
-  
+
   for i, tileNr in map.tiles:
     if tileNr == 0: continue
 
@@ -265,8 +266,8 @@ proc renderTee(renderer: RendererPtr, texture: TexturePtr, pos: Point2d) =
   for part in bodyParts.mitems:
     renderer.copyEx(texture, part.source, part.dest, angle = 0.0,
       center = nil, flip = part.flip)
-  
-proc render(game: Game, tick: int, bgm: MusicPtr) =
+
+proc render(game: Game, tick: int) =
   game.renderer.clear()
   # Actual drawing here
   game.renderer.renderTee(game.player.texture,
@@ -279,10 +280,10 @@ proc render(game: Game, tick: int, bgm: MusicPtr) =
     game.renderTextCached(formatTime(tick - time.begin), 50, 100, white)
   elif time.finish >= 0:
     game.renderTextCached("Finished in: " & formatTimeExact(time.finish), 50, 100, white)
-    discard stopBGM(bgm)
+
   if time.best >= 0:
     game.renderTextCached("Best time: " & formatTimeExact(time.best), 50, 150, white)
-  
+
   game.renderer.present()
 
 # compiler options using -d:fluidCamera or -d:innerCamera
@@ -308,10 +309,10 @@ proc physics(game: Game) =
   if game.inputs[Input.jump]:
     if ground:
       game.player.vel.y = -21
-  
+
   let direction = float(game.inputs[Input.right].int -
                         game.inputs[Input.left].int)
-  
+
   game.player.vel.y += 0.75
   if ground:
     game.player.vel.x = 0.5 * game.player.vel.x + 4.0 * direction
@@ -320,7 +321,7 @@ proc physics(game: Game) =
   game.player.vel.x = clamp(game.player.vel.x, -8, 8)
 
   game.map.moveBox(game.player.pos, game.player.vel, playerSize)
-  
+
 
 proc main() =
   sdlFailIf(not sdl2.init(INIT_EVERYTHING)):
@@ -332,16 +333,18 @@ proc main() =
   sdlFailIf(not sdl2.setHint("SDL_RENDER_SCALE_QUALITY", "2")):
     "Failed to set linear texture filtering"
 
-  sdlFailIf(ttfInit() == SdlError): 
+  sdlFailIf(ttfInit() == SdlError):
     "SDL2 TTF initialization failed"
-  defer: 
+  defer:
     ttfQuit()
 
   const imgFlags: cint = IMG_INIT_PNG
   sdlFailIf(image.init(imgFlags) != imgFlags):
     "SDL2 Image initialization failed"
-  defer: 
+  defer:
     image.quit()
+
+
 
   let window = sdl2.createWindow(
     title = "Coin Collector - Desktop Alpha",
@@ -366,7 +369,7 @@ proc main() =
   renderer.setDrawColor(r = 110, g = 132, b = 174)
 
   var game = newGame(renderer)
-  var bgm = startBGM()
+  startBGM()
 
   while not game.inputs[Input.quit]:
     game.handleInput()
@@ -377,7 +380,7 @@ proc main() =
       game.logic(tick)
     lastTick = newTick
 
-    game.render(lastTick, bgm)
+    game.render(lastTick)
 
 when isMainModule:
   main()
