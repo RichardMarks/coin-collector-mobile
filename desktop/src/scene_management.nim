@@ -5,7 +5,7 @@ import tables
 const SCENE_LIFE_CYCLE_SIZE = 6
 type SceneLifeCycleProc = proc()
 type
-  Scene = object
+  Scene = ref object
     name: string
     onRegister: SceneLifeCycleProc
     onEnter: SceneLifeCycleProc
@@ -14,11 +14,13 @@ type
     onExit: SceneLifeCycleProc
     onDestroy: SceneLifeCycleProc
 
-  GameSceneManager = object
+  GameSceneManager = ref object
     current: Scene
-    registry: seq[Scene]
+    # registry: seq[Scene]
 
-proc newScene(name: string, slc:array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]): Scene =
+  SceneLifeCycle = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
+
+proc newScene(name: string, slc:SceneLifeCycle): Scene =
   new result
   result.name = name
   result.onRegister = slc[0]
@@ -30,7 +32,7 @@ proc newScene(name: string, slc:array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
 
 proc newGameSceneManager: GameSceneManager =
   new result
-  result.registry
+  # result.registry
 
 # scene life cycle procedures
 
