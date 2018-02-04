@@ -1,10 +1,10 @@
-import sdl2, sdl2.image, sdl2.ttf
+import sdl2, sdl2.image, sdl2.ttf, sdl2/mixer
 import strutils
 import times
 import math
 import strfmt
 include data_types
-
+from music_renderer import startBGM, stopBGM
 
 template sdlFailIf(condition: typed, reason: string) =
   if condition:
@@ -266,7 +266,7 @@ proc renderTee(renderer: RendererPtr, texture: TexturePtr, pos: Point2d) =
     renderer.copyEx(texture, part.source, part.dest, angle = 0.0,
       center = nil, flip = part.flip)
   
-proc render(game: Game, tick: int) =
+proc render(game: Game, tick: int, bgm: MusicPtr) =
   game.renderer.clear()
   # Actual drawing here
   game.renderer.renderTee(game.player.texture,
@@ -279,6 +279,7 @@ proc render(game: Game, tick: int) =
     game.renderTextCached(formatTime(tick - time.begin), 50, 100, white)
   elif time.finish >= 0:
     game.renderTextCached("Finished in: " & formatTimeExact(time.finish), 50, 100, white)
+    discard stopBGM(bgm)
   if time.best >= 0:
     game.renderTextCached("Best time: " & formatTimeExact(time.best), 50, 150, white)
   
@@ -365,6 +366,7 @@ proc main() =
   renderer.setDrawColor(r = 110, g = 132, b = 174)
 
   var game = newGame(renderer)
+  var bgm = startBGM()
 
   while not game.inputs[Input.quit]:
     game.handleInput()
@@ -375,7 +377,7 @@ proc main() =
       game.logic(tick)
     lastTick = newTick
 
-    game.render(lastTick)
+    game.render(lastTick, bgm)
 
 when isMainModule:
   main()
