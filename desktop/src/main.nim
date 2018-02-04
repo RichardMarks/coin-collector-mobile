@@ -1,33 +1,35 @@
-import basic2d
-import strutils
-import times
-import math
-import strfmt
-import streams
-import os
+# import basic2d
+# import strutils
+# import times
+# import math
+# import strfmt
+# import streams
+# import os
 
-import sdl2
-import sdl2.image
-import sdl2.ttf
+# import sdl2
+# import sdl2.image
+# import sdl2.ttf
 
-type
-  SDLException = object of Exception
+# type
+#   SDLException = object of Exception
 
-  CacheLine = object
-    texture: TexturePtr
-    w, h: cint
+#   CacheLine = object
+#     texture: TexturePtr
+#     w, h: cint
 
-  TextCache = ref object
-    text: string
-    cache: array[2, CacheLine]
+#   TextCache = ref object
+#     text: string
+#     cache: array[2, CacheLine]
 
-  Input {.pure.} = enum none, left, right, jump, restart, quit, camera
+#   Input {.pure.} = enum none, left, right, jump, restart, quit, camera
 
-  Game = ref object
-    inputs: array[Input, bool]
-    inputPressed: array[Input, bool]
-    renderer: RendererPtr
-    font: FontPtr
+#   Game = ref object
+#     inputs: array[Input, bool]
+#     inputPressed: array[Input, bool]
+#     renderer: RendererPtr
+#     font: FontPtr
+
+include game_types
 
 template sdlFailIf(condition: typed, reason: string) =
   if condition:
@@ -100,12 +102,13 @@ proc toInput(key: Scancode): Input =
   of SDL_SCANCODE_D: Input.right
   of SDL_SCANCODE_LEFT: Input.left
   of SDL_SCANCODE_RIGHT: Input.right
-  of SDL_SCANCODE_SPACE: Input.jump
-  of SDL_SCANCODE_UP: Input.jump
-  of SDL_SCANCODE_R: Input.restart
+  of SDL_SCANCODE_SPACE: Input.confirm
+  of SDL_SCANCODE_UP: Input.up
+  of SDL_SCANCODE_DOWN: Input.down
   of SDL_SCANCODE_Q: Input.quit
   of SDL_SCANCODE_ESCAPE: Input.quit
-  of SDL_SCANCODE_C: Input.camera
+  of SDL_SCANCODE_BACKSPACE: Input.cancel
+  of SDL_SCANCODE_RETURN: Input.confirm
   else: Input.none
 
 proc handleInput(game: Game) =
