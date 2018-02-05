@@ -2,6 +2,9 @@ import tables
 
 # include game_types
 
+type
+  MissingSceneError* = object of Exception
+
 const SCENE_LIFE_CYCLE_SIZE = 6
 type SceneLifeCycleProc = proc()
 type
@@ -16,7 +19,7 @@ type
 
   GameSceneManager = ref object
     current: Scene
-    # registry: seq[Scene]
+    registry: seq[Scene]
 
   SceneLifeCycle = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
 
@@ -32,11 +35,36 @@ proc newScene(name: string, slc:SceneLifeCycle): Scene =
 
 proc newGameSceneManager: GameSceneManager =
   new result
-  # result.registry
+  result.registry = newSeq[Scene](0)
 
-# proc register(gsm: GameSceneManager, scene: Scene) =
-#   gsm.registry
+proc register(gsm: GameSceneManager, scene: Scene) =
+  gsm.registry.add(scene)
+  var registeredSceneIndex: int = find(gsm.registry, scene)
+  gsm.registry[registeredSceneIndex].onRegister()
 
+proc enter(gsm: GameSceneManager, scene: Scene) =
+  var foundIndex: int = find(gsm.registry, scene)
+  if foundIndex > -1:
+    gsm.current = gsm.registry[foundIndex]
+    gsm.current.onEnter()
+  else:
+    raise newException(MissingSceneError, "scene doesn't exist")
+
+proc exit(gsm: GameSceneManager, scene: Scene) =
+  var foundIndex: int = find(gsm.registry, scene)
+
+  gsm.registry[foundIndex].onExit()
+
+  if foundIndex + 1 < len(gsm.registry):
+    gsm.current = gsm.registry[foundIndex + 1]
+  else:
+    gsm.current = gsm.registry[foundIndex - 1]
+
+proc destroy(gsm: GameSceneManager, scene: Scene) =
+  var foundIndex: int = find(gsm.registry, scene)
+  if foundIndex > -1:
+    gsm.registry[foundIndex].onDestroy()
+    gsm.registry.delete(foundIndex)
 
 
 # scene life cycle procedures
@@ -108,17 +136,17 @@ when isMainModule:
 
   gsm.register(titleScene)
   gsm.register(playScene)
-  gsm.enter("title")
+  gsm.enter(titleScene)
   echo "press enter to play"
   discard stdin.readLine()
-  gsm.exit("title")
-  gsm.enter("play")
+  gsm.exit(titleScene)
+  gsm.enter(playScene)
   echo "press enter to go back to title"
   discard stdin.readLine()
-  gsm.exit("play")
-  gsm.enter("title")
+  gsm.exit(playScene)
+  gsm.enter(titleScene)
   echo "press enter to quit"
   discard stdin.readLine()
-  gsm.exit("title")
-  gsm.destroy("play")
-  gsm.destroy("title")
+  gsm.exit(titleScene)
+  gsm.destroy(playScene)
+  gsm.destroy(titleScene)
