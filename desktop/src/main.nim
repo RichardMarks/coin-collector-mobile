@@ -80,7 +80,7 @@ proc newGame(renderer: RendererPtr): Game =
   new result
   result.renderer = renderer
   # result.font = openFontRW(readRW("DejaVuSans.ttf"), freesrc = 1, 24)
-  result.font = openFont("DejaVuSans.ttf", 24)
+  result.font = openFont("../DejaVuSans.ttf", 24)
   sdlFailIf(result.font.isNil):
     "Failed to load font"
 
@@ -165,7 +165,7 @@ proc main() =
   defer:
     renderer.destroy()
 
-  renderer.setDrawColor(r = 0xFF, g = 0x00, b = 0xFF)
+  renderer.setDrawColor(r = 0x30, g = 0x60, b = 0x90)
 
   # var lmb:bool = false
 

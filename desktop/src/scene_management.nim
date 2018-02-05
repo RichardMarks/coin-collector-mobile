@@ -34,6 +34,11 @@ proc newGameSceneManager: GameSceneManager =
   new result
   # result.registry
 
+# proc register(gsm: GameSceneManager, scene: Scene) =
+#   gsm.registry
+
+
+
 # scene life cycle procedures
 
 # 1. called when a scene is registered
@@ -80,23 +85,23 @@ proc destroyPlayScene() =
 
 when isMainModule:
   let titleScene* = newScene(
-    name = "title",
-    slc = [registerTitleScene,
-    enterTitleScene,
-    updateTitleScene,
-    renderTitleScene,
-    exitTitleScene,
-    destroyTitleScene]
+    "title",
+    [registerTitleScene.SceneLifeCycleProc,
+    enterTitleScene.SceneLifeCycleProc,
+    updateTitleScene.SceneLifeCycleProc,
+    renderTitleScene.SceneLifeCycleProc,
+    exitTitleScene.SceneLifeCycleProc,
+    destroyTitleScene.SceneLifeCycleProc]
   )
 
   let playScene* = newScene(
     "play",
-    [registerPlayScene,
-    enterPlayScene,
-    updatePlayScene,
-    renderPlayScene,
-    exitPlayScene,
-    destroyPlayScene]
+    [registerPlayScene.SceneLifeCycleProc,
+    enterPlayScene.SceneLifeCycleProc,
+    updatePlayScene.SceneLifeCycleProc,
+    renderPlayScene.SceneLifeCycleProc,
+    exitPlayScene.SceneLifeCycleProc,
+    destroyPlayScene.SceneLifeCycleProc]
   )
 
   let gsm = newGameSceneManager()
