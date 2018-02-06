@@ -52,13 +52,12 @@ proc enter(gsm: GameSceneManager, scene: Scene) =
 
 proc exit(gsm: GameSceneManager, scene: Scene) =
   var foundIndex: int = find(gsm.registry, scene)
-
-  gsm.registry[foundIndex].onExit()
-
-  if foundIndex + 1 < len(gsm.registry):
-    gsm.current = gsm.registry[foundIndex + 1]
+  if foundIndex > -1:
+    gsm.current = gsm.registry[foundIndex]
+    gsm.current.onExit()
   else:
-    gsm.current = gsm.registry[foundIndex - 1]
+    raise newException(MissingSceneError, "scene doesn't exist")
+
 
 proc destroy(gsm: GameSceneManager, scene: Scene) =
   var foundIndex: int = find(gsm.registry, scene)
