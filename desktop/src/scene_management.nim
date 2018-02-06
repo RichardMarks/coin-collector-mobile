@@ -1,10 +1,12 @@
-import tables
-include game_types
+# import tables
+import game_types
 
-proc newScene*( name: string, sceneObjects: seq[SceneObject], slc:SceneLifeCycle): Scene =
+proc newScene*(name: string, slc: SceneLifeCycle): Scene =
+  ## Scene object constructor. Initializes new Scene.
+
   new result
   result.name = name
-  result.sceneObjects = sceneObjects
+  result.sceneObjects = @[]
   result.onRegister = slc[0]
   result.onEnter = slc[1]
   result.onUpdate = slc[2]
@@ -13,15 +15,19 @@ proc newScene*( name: string, sceneObjects: seq[SceneObject], slc:SceneLifeCycle
   result.onDestroy = slc[5]
 
 proc newGameSceneManager*: GameSceneManager =
+  ## GameSceneManager object constructor. Initializes new GameSceneManager.
   new result
   result.registry = newSeq[Scene](0)
 
 proc register*(gsm: GameSceneManager, scene: Scene) =
+  ## calls onRegister Scene Event
   gsm.registry.add(scene)
   var registeredSceneIndex: int = find(gsm.registry, scene)
   gsm.registry[registeredSceneIndex].onRegister()
 
 proc enter*(gsm: GameSceneManager, scene: Scene) =
+  ## calls onEnter Scene Event  
+
   var foundIndex: int = find(gsm.registry, scene)
   if foundIndex > -1:
     gsm.current = gsm.registry[foundIndex]
@@ -30,15 +36,17 @@ proc enter*(gsm: GameSceneManager, scene: Scene) =
     raise newException(MissingSceneError, "scene doesn't exist")
 
 proc exit*(gsm: GameSceneManager, scene: Scene) =
+  ## calls onExit Scene Event
+  
   var foundIndex: int = find(gsm.registry, scene)
   if foundIndex > -1:
-    gsm.current = gsm.registry[foundIndex]
-    gsm.current.onExit()
+    gsm.registry[foundIndex].onExit()
   else:
     raise newException(MissingSceneError, "scene doesn't exist")
 
-
 proc destroy*(gsm: GameSceneManager, scene: Scene) =
+  ## calls onDestroy Scene Event
+  
   var foundIndex: int = find(gsm.registry, scene)
   if foundIndex > -1:
     gsm.registry[foundIndex].onDestroy()

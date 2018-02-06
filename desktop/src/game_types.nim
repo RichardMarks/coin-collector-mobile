@@ -12,19 +12,23 @@ import sdl2.ttf
 
 const SCENE_LIFE_CYCLE_SIZE = 6
 
+template sdlFailIf*(condition: typed, reason: string) =
+  if condition:
+    raise SDLException.newException(reason & ", SDL Error: " & $getError())
+
 type
   SDLException* = object of Exception
   MissingSceneError* = object of Exception
 
   CacheLine* = object
-    texture: TexturePtr
-    w, h: cint
+    texture*: TexturePtr
+    w*, h*: cint
   
   TextCache* = ref object
-    text: string
-    cache: array[2, CacheLine]
+    text*: string
+    cache*: array[2, CacheLine]
   
-  Input {.pure.} = enum
+  Input* {.pure.} = enum
     none,
     click,
     up,
@@ -47,22 +51,22 @@ type
     font*: FontPtr
 
   GameSceneManager* = ref object
-    current: Scene
-    registry: seq[Scene]
+    current*: Scene
+    registry*: seq[Scene]
 
   SceneObject* = ref object
     tags*: seq[string]
     active*: bool
     visible*: bool
-    x, y: float
+    x*, y*: float
 
   Scene* = ref object
     name*: string
     sceneObjects*: seq[SceneObject]
-    onRegister: SceneLifeCycleProc
-    onEnter: SceneLifeCycleProc
-    onUpdate: SceneLifeCycleProc
-    onRender: SceneLifeCycleProc
-    onExit: SceneLifeCycleProc
-    onDestroy: SceneLifeCycleProc
+    onRegister*: SceneLifeCycleProc
+    onEnter*: SceneLifeCycleProc
+    onUpdate*: SceneLifeCycleProc
+    onRender*: SceneLifeCycleProc
+    onExit*: SceneLifeCycleProc
+    onDestroy*: SceneLifeCycleProc
 

@@ -1,88 +1,29 @@
 # import basic2d
 # import strutils
-# import times
 # import math
 # import strfmt
 # import streams
 # import os
 
-# import sdl2
-# import sdl2.image
-# import sdl2.ttf
+import times
+import sdl2
+import sdl2.image
+import sdl2.ttf
 
-# type
-#   SDLException = object of Exception
-
-#   CacheLine = object
-#     texture: TexturePtr
-#     w, h: cint
-
-#   TextCache = ref object
-#     text: string
-#     cache: array[2, CacheLine]
-
-#   Input {.pure.} = enum none, left, right, jump, restart, quit, camera
-
-#   Game = ref object
-#     inputs: array[Input, bool]
-#     inputPressed: array[Input, bool]
-#     renderer: RendererPtr
-#     font: FontPtr
-
-include game_types
-
-template sdlFailIf(condition: typed, reason: string) =
-  if condition:
-    raise SDLException.newException(reason & ", SDL Error: " & $getError())
-
-proc newTextCache(): TextCache =
-  new result
-
-proc renderText(renderer: RendererPtr, font: FontPtr, text: string, x, y, outline: cint, color: Color): CacheLine =
-  font.setFontOutline(outline)
-  let surface = font.renderUtf8Blended(text.cstring, color)
-  sdlFailIf(surface.isNil):
-    "Failed to render text surface: " & text
-  discard surface.setSurfaceAlphaMod(color.a)
-
-  result.w = surface.w
-  result.h = surface.h
-  result.texture = renderer.createTextureFromSurface(surface)
-
-  sdlFailIf(result.texture.isNil):
-    "Failed to create texture from rendered text: " & text
-
-  surface.freeSurface()
-
-proc renderText(game: Game, text: string, x, y: cint, color: Color, tc: TextCache) =
-  let passes = [
-    (color: color(0, 0, 0, 64), outline: 2.cint),
-    (color: color, outline: 0.cint)
-  ]
-
-  if text != tc.text:
-    for i in 0..1:
-      tc.cache[i].texture.destroy()
-      tc.cache[i] = game.renderer.renderText(game.font, text, x, y, passes[i].outline, passes[i].color)
-      tc.text = text
-  for i in 0..1:
-    var
-      source = rect(0, 0, tc.cache[i].w, tc.cache[i].h)
-      dest = rect(x - passes[i].outline, y - passes[i].outline, tc.cache[i].w, tc.cache[i].h)
-    game.renderer.copyEx(tc.cache[i].texture, source, dest, angle = 0.0, center = nil, flip = SDL_FLIP_NONE)
-
-template renderTextCached(game: Game, text: string, x, y: cint, color: Color) =
-  block:
-    var tc {.global.} = newTextCache()
-    game.renderText(text, x, y, color, tc)
+import game_types
+import scene_management
+from scenes import titleScene
 
 proc newGame(renderer: RendererPtr): Game =
   new result
+  result.sceneManager = newGameSceneManager()
   result.renderer = renderer
   # result.font = openFontRW(readRW("DejaVuSans.ttf"), freesrc = 1, 24)
   result.font = openFont("../DejaVuSans.ttf", 24)
   sdlFailIf(result.font.isNil):
     "Failed to load font"
+  result.sceneManager.register(titleScene)
+  result.sceneManager.enter(titleScene)
 
 proc wasPressed(game:Game, input:Input): bool =
   if game.inputs[input]:
