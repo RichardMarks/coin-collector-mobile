@@ -16,14 +16,14 @@ from scenes import titleScene
 
 proc newGame(renderer: RendererPtr): Game =
   new result
-  result.sceneManager = newGameSceneManager()
+  result.sceneManager = newGameSceneManager(result)
   result.renderer = renderer
   # result.font = openFontRW(readRW("DejaVuSans.ttf"), freesrc = 1, 24)
   result.font = openFont("../DejaVuSans.ttf", 24)
   sdlFailIf(result.font.isNil):
     "Failed to load font"
   result.sceneManager.register(titleScene)
-  result.sceneManager.enter(titleScene)
+  result.sceneManager.enter("title")
 
 proc wasPressed(game:Game, input:Input): bool =
   if game.inputs[input]:

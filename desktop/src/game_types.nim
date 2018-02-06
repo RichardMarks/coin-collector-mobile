@@ -23,11 +23,11 @@ type
   CacheLine* = object
     texture*: TexturePtr
     w*, h*: cint
-  
+
   TextCache* = ref object
     text*: string
     cache*: array[2, CacheLine]
-  
+
   Input* {.pure.} = enum
     none,
     click,
@@ -38,11 +38,11 @@ type
     cancel,
     confirm,
     quit
-  
-  SceneLifeCycleProc* = proc()
+
+  SceneLifeCycleProc* = proc(scene: Scene, game: Game, tick:int)
 
   SceneLifeCycle* = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
-  
+
   Game* = ref object
     sceneManager*: GameSceneManager
     inputs*: array[Input, bool]
@@ -53,6 +53,7 @@ type
   GameSceneManager* = ref object
     current*: Scene
     registry*: seq[Scene]
+    game*: Game
 
   SceneObject* = ref object
     tags*: seq[string]
@@ -62,6 +63,7 @@ type
 
   Scene* = ref object
     name*: string
+    index*: int
     sceneObjects*: seq[SceneObject]
     onRegister*: SceneLifeCycleProc
     onEnter*: SceneLifeCycleProc
