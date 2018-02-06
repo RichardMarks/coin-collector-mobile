@@ -19,12 +19,12 @@ type
   CacheLine* = object
     texture: TexturePtr
     w, h: cint
-  
+
   TextCache* = ref object
     text: string
     cache: array[2, CacheLine]
-  
-  Input {.pure.} = enum
+
+  Input* {.pure.} = enum
     none,
     click,
     up,
@@ -34,11 +34,11 @@ type
     cancel,
     confirm,
     quit
-  
+
   SceneLifeCycleProc* = proc()
 
   SceneLifeCycle* = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
-  
+
   Game* = ref object
     sceneManager*: GameSceneManager
     inputs*: array[Input, bool]
