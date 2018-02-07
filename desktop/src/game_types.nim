@@ -10,6 +10,22 @@ import sdl2
 import sdl2.image
 import sdl2.ttf
 
+const SCREEN_W* = 1280
+const SCREEN_H* = 720
+
+const TILE_WIDTH* = 64
+const TILE_HEIGHT* = 64
+const TILE_THICKNESS* = 21
+
+const BOARD_COLUMNS* = 10
+const BOARD_ROWS* = 10
+const BOARD_XLIMIT* = BOARD_COLUMNS - 1
+const BOARD_YLIMIT* = BOARD_ROWS - 1
+const BOARD_WIDTH* = TILE_WIDTH * BOARD_COLUMNS
+const Y_SPACE* = TILE_HEIGHT - TILE_THICKNESS
+const BOARD_HEIGHT* = Y_SPACE * BOARD_ROWS
+
+
 const SCENE_LIFE_CYCLE_SIZE = 6
 
 template sdlFailIf*(condition: typed, reason: string) =
@@ -46,6 +62,17 @@ type
 
   SceneLifeCycle* = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
 
+  GameState* = tuple
+    board: string
+    coins: int
+    lives: int
+
+  BoardEvent* = enum
+    foundDirt,
+    foundCoin,
+    foundPit,
+    takeCoin
+
   Game* = ref object
     sceneManager*: GameSceneManager
     inputs*: array[Input, bool]
@@ -53,22 +80,16 @@ type
     renderer*: RendererPtr
     font*: FontPtr
     mouse*: MouseCoordinate
+    state*: GameState
 
   GameSceneManager* = ref object
     current*: Scene
     registry*: seq[Scene]
     game*: Game
 
-  SceneObject* = ref object
-    tags*: seq[string]
-    active*: bool
-    visible*: bool
-    x*, y*: float
-
   Scene* = ref object
     name*: string
     index*: int
-    sceneObjects*: seq[SceneObject]
     onRegister*: SceneLifeCycleProc
     onEnter*: SceneLifeCycleProc
     onUpdate*: SceneLifeCycleProc
