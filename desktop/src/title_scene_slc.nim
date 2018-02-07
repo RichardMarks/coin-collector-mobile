@@ -4,6 +4,7 @@ import scene_management
 
 from text_renderer import renderTextCached
 from game_input import wasClicked
+from game_state import getInitialState
 
 const WHITE = color(0xFF, 0xFF, 0xFF, 0xFF)
 const YELLOW = color(0xFF, 0xFF, 0x00, 0xFF)
@@ -25,6 +26,7 @@ proc enterTitleScene(scene: Scene, game: Game, tick:int) =
   # enter animation / show title scene here
   echo "entering title scene"
 
+  game.getInitialState()
   game.renderer.setDrawColor(r = 0x50, g = 0x30, b = 0x90)
 
 proc updateTitleScene(scene: Scene, game: Game, tick:int) =

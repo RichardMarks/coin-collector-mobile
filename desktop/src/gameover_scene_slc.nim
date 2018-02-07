@@ -1,5 +1,6 @@
 import game_types
 import scene_management
+from game_input import wasClicked
 
 proc registerGameoverScene(scene: Scene, game: Game, tick:int) =
   # load assets here
@@ -11,7 +12,8 @@ proc enterGameoverScene(scene: Scene, game: Game, tick:int) =
 
 proc updateGameoverScene(scene: Scene, game: Game, tick:int) =
   # called on game update proc
-  discard
+  if game.wasClicked():
+    game.sceneManager.enter("title")
 
 proc renderGameoverScene(scene: Scene, game: Game, tick:int) =
   # called on game render proc

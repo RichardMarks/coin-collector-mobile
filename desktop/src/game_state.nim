@@ -1,25 +1,38 @@
 import game_types
 import times
 import mersenne
-from strutils import repeat
+from strutils import repeat, `%`
 
-var seed: uint32
+const STONE_TILE* = 'S'
+const DIRT_TILE* = 'D'
+const PIT_TILE* = 'P'
+const COIN_TILE* = 'C'
+
+var
+  seed: uint32
+  mt: MersenneTwister
+  coinChance: int
+  pitChance: int
+  dirtChance: int
 
 proc nextRandom*(low: uint32, high: uint32): uint32 =
   ## obtains a pseudo-random number R >= low < high
-  var mt = newMersenneTwister(seed)
   result = uint32(low + (mt.getNum() mod (high - low)))
+
+proc resetBoardState*(game: Game) =
+  ## reset the board state to all stones, and calculates a new probability for outcome
+  game.state.board = STONE_TILE.repeat(100)
+  coinChance = nextRandom(5, 30).int
+  pitChance = nextRandom(10, 40).int
+  dirtChance = 100 - (coinChance + pitChance)
 
 proc getInitialState*(game: Game) =
   ## initializes the game's state with the initial state
-  game.state.board = "S".repeat(100)
+  game.resetBoardState()
   game.state.lives = 3
   game.state.coins = 0
   seed = epochTime().uint32
-
-proc resetBoardState*(game: Game) =
-  ## reset the board state to all stones
-  game.state.board = "S".repeat(100)
+  mt = newMersenneTwister(seed)
 
 proc loseLife*(game: Game) =
   ## decrements number of remaining lives - will not go < 0
@@ -39,6 +52,17 @@ proc setBoardCell*(game: Game, x: int, y: int, cell: char) =
   assert(position >= 0 and position < 100, "Cannot write cell outside of board boundaries")
   game.state.board[position] = cell
 
+proc getNextCell(game: Game): char =
+  ## determines what kind of cell will be uncovered - used internally by clickBoardCell
+
+  let roll = nextRandom(0, 100).int
+
+  # echo "chance is coin $1% pit $2% dirt $3%" % [$coinChance, $pitChance, $dirtChance]
+  # echo "roll is " & $roll
+
+  let chance = COIN_TILE.repeat(coinChance) & PIT_TILE.repeat(pitChance) & DIRT_TILE.repeat(dirtChance)
+  result = chance[roll]
+
 proc clickBoardCell*(game: Game, x: int, y: int): BoardEvent =
   ## handles a click on a given board cell at a given position
   ## if the cell is a stone,
@@ -55,18 +79,17 @@ proc clickBoardCell*(game: Game, x: int, y: int): BoardEvent =
 
   let currentCell = game.getBoardCell(x, y)
 
-  if currentCell == 'S':
-    let R = nextRandom(0, 2)
-    let nextCell: char = "DPC"[R.int]
+  if currentCell == STONE_TILE:
+    let nextCell = game.getNextCell()
     game.setBoardCell(x, y, nextCell)
-    if nextCell == 'P':
+    if nextCell == PIT_TILE:
       game.loseLife()
       result = BoardEvent.foundPit
-    elif nextCell == 'D':
+    elif nextCell == DIRT_TILE:
       result = BoardEvent.foundDirt
-    elif nextCell == 'C':
+    elif nextCell == COIN_TILE:
       result = BoardEvent.foundCoin
-  elif currentCell == 'C':
+  elif currentCell == COIN_TILE:
     inc(game.state.coins)
-    game.setBoardCell(x, y, 'D')
+    game.setBoardCell(x, y, DIRT_TILE)
     result = BoardEvent.takeCoin
