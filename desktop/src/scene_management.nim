@@ -5,7 +5,6 @@ proc newScene*(name: string, slc: SceneLifeCycle): Scene =
 
   new result
   result.name = name
-  result.sceneObjects = @[]
   result.onRegister = slc[0]
   result.onEnter = slc[1]
   result.onUpdate = slc[2]

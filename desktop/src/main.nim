@@ -13,12 +13,14 @@ import sdl2.ttf
 import game_types
 import scene_management
 from game_input import handleInput
+from game_state import getInitialState
 from scenes import titleScene, creditsScene, gameoverScene, startScene, playScene
 
 from text_renderer import renderTextCached
 
 proc newGame(renderer: RendererPtr): Game =
   new result
+  result.getInitialState()
   result.sceneManager = newGameSceneManager(result)
   result.renderer = renderer
   result.font = openFont("../DejaVuSans.ttf", 24)
