@@ -12,11 +12,6 @@ proc renderText*(renderer: RendererPtr, font: FontPtr, text: string, x, y, outli
     "Failed to render text surface: " & text
   discard surface.setSurfaceAlphaMod(color.a)
 
-template renderTextCached*(game: Game, text: string, x, y: cint, color: Color) =
-  block:
-    var tc {.global.} = newTextCache()
-    game.renderText(text, x, y, color, tc)
-
   result.w = surface.w
   result.h = surface.h
   result.texture = renderer.createTextureFromSurface(surface)
@@ -42,3 +37,8 @@ proc renderText*(game: Game, text: string, x, y: cint, color: Color, tc: TextCac
       source = rect(0, 0, tc.cache[i].w, tc.cache[i].h)
       dest = rect(x - passes[i].outline, y - passes[i].outline, tc.cache[i].w, tc.cache[i].h)
     game.renderer.copyEx(tc.cache[i].texture, source, dest, angle = 0.0, center = nil, flip = SDL_FLIP_NONE)
+
+template renderTextCached*(game: Game, text: string, x, y: cint, color: Color) =
+  block:
+    var tc {.global.} = newTextCache()
+    game.renderText(text, x, y, color, tc)

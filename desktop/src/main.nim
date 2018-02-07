@@ -12,58 +12,50 @@ import sdl2.ttf
 
 import game_types
 import scene_management
-from scenes import titleScene
+from game_input import handleInput
+from scenes import titleScene, creditsScene, gameoverScene, startScene, playScene
+
+from text_renderer import renderTextCached
 
 proc newGame(renderer: RendererPtr): Game =
   new result
   result.sceneManager = newGameSceneManager(result)
   result.renderer = renderer
-  # result.font = openFontRW(readRW("DejaVuSans.ttf"), freesrc = 1, 24)
   result.font = openFont("../DejaVuSans.ttf", 24)
   sdlFailIf(result.font.isNil):
     "Failed to load font"
-  result.sceneManager.register(titleScene)
+
+  # register all game scenes
+  for scene in [
+    titleScene,
+    creditsScene,
+    gameoverScene,
+    startScene,
+    playScene
+  ]:
+    result.sceneManager.register(scene)
+
+  # load the initial scene
   result.sceneManager.enter("title")
 
-proc wasPressed(game:Game, input:Input): bool =
-  if game.inputs[input]:
-    game.inputPressed[input] = true
-    result = false
-  else:
-    if game.inputPressed[input]:
-      game.inputPressed[input] = false
-      result = true
-
 proc update(game: Game, tick: int) =
-  discard
-
-proc toInput(key: Scancode): Input =
-  case key
-  of SDL_SCANCODE_A: Input.left
-  of SDL_SCANCODE_D: Input.right
-  of SDL_SCANCODE_LEFT: Input.left
-  of SDL_SCANCODE_RIGHT: Input.right
-  of SDL_SCANCODE_SPACE: Input.confirm
-  of SDL_SCANCODE_UP: Input.up
-  of SDL_SCANCODE_DOWN: Input.down
-  of SDL_SCANCODE_Q: Input.quit
-  of SDL_SCANCODE_ESCAPE: Input.quit
-  of SDL_SCANCODE_BACKSPACE: Input.cancel
-  of SDL_SCANCODE_RETURN: Input.confirm
-  else: Input.none
-
-proc handleInput(game: Game) =
-  var event = defaultEvent
-  while pollEvent(event):
-    case event.kind
-    of QuitEvent: game.inputs[Input.quit] = true
-    of KeyDown: game.inputs[event.key.keysym.scancode.toInput] = true
-    of KeyUp: game.inputs[event.key.keysym.scancode.toInput] = false
-    else: discard
+  let scene = game.sceneManager.current
+  if scene != nil:
+    scene.onUpdate(scene, game, tick)
+  else:
+    game.inputs[Input.quit] = true
 
 proc render(game: Game, tick: int) =
-  game.renderer.clear()
+  const WHITE = color(0xFF, 0xFF, 0xFF, 0xFF)
 
+  game.renderer.clear()
+  let scene = game.sceneManager.current
+  if scene != nil:
+    scene.onRender(scene, game, tick)
+
+    game.renderTextCached("[" & scene.name & "]", 0, 0, WHITE)
+  else:
+    game.renderTextCached("[NO SCENE]", 0, 0, WHITE)
   game.renderer.present()
 
 proc main() =
@@ -108,12 +100,21 @@ proc main() =
 
   renderer.setDrawColor(r = 0x30, g = 0x60, b = 0x90)
 
-  # var lmb:bool = false
-
   var
     game = newGame(renderer)
     startTime = epochTime()
     lastTick = 0
+
+  defer:
+    # cleanup the scenes when the main proc exits
+    for scene in [
+      titleScene,
+      creditsScene,
+      gameoverScene,
+      startScene,
+      playScene
+    ]:
+      game.sceneManager.destroy(scene.name)
 
   while not game.inputs[Input.quit]:
     game.handleInput()

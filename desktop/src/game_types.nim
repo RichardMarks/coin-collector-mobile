@@ -37,7 +37,10 @@ type
     right,
     cancel,
     confirm,
-    quit
+    quit,
+    mouse
+
+  MouseCoordinate* = tuple[x, y:int]
 
   SceneLifeCycleProc* = proc(scene: Scene, game: Game, tick:int)
 
@@ -49,6 +52,7 @@ type
     inputPressed*: array[Input, bool]
     renderer*: RendererPtr
     font*: FontPtr
+    mouse*: MouseCoordinate
 
   GameSceneManager* = ref object
     current*: Scene
