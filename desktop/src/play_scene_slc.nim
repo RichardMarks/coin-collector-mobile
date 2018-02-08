@@ -75,9 +75,6 @@ proc enterPlayScene(scene: Scene, game: Game, tick:int) =
 proc updatePlayScene(scene: Scene, game: Game, tick:int) =
   # called on game update proc
 
-  # update play scene HUD here
-  game.drawHUD(tick)
-
   if game.wasClicked():
     game.onClick()
 
