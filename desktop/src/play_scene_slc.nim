@@ -17,6 +17,16 @@ let regionRects: array[2, Rect] = [
   rect(0, 0, 120, 40)
 ]
 
+proc drawHUD(game: Game, tick:int) =
+  let
+    lives: string = $game.state.lives
+    coins: string = $game.state.coins
+    timer: string = $game.state.timer
+
+  game.renderTextCached("LIVES: " & lives,  325, 65, WHITE)
+  game.renderTextCached("SCORE: " & coins, 325, 100, WHITE)
+  game.renderTextCached("TIME: " & timer, 800, 65, WHITE)
+
 proc onClick(game: Game) =
   let mx = game.mouse.x
   let my = game.mouse.y
@@ -64,11 +74,15 @@ proc enterPlayScene(scene: Scene, game: Game, tick:int) =
 
 proc updatePlayScene(scene: Scene, game: Game, tick:int) =
   # called on game update proc
+
   if game.wasClicked():
     game.onClick()
 
 proc renderPlayScene(scene: Scene, game: Game, tick:int) =
   # called on game render proc
+
+  # render HUD initially
+  game.drawHUD(tick)
 
   for y in 0..BOARD_YLIMIT:
     for x in 0..BOARD_XLIMIT:
