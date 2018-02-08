@@ -31,6 +31,7 @@ proc getInitialState*(game: Game) =
   game.resetBoardState()
   game.state.lives = 3
   game.state.coins = 0
+  game.state.timer = 60
   seed = epochTime().uint32
   mt = newMersenneTwister(seed)
 

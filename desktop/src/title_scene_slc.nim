@@ -6,9 +6,6 @@ from text_renderer import renderTextCached
 from game_input import wasClicked
 from game_state import getInitialState
 
-const WHITE = color(0xFF, 0xFF, 0xFF, 0xFF)
-const YELLOW = color(0xFF, 0xFF, 0x00, 0xFF)
-
 type
   TitleButton = enum
     none,

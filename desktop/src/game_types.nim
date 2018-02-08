@@ -24,6 +24,8 @@ const BOARD_YLIMIT* = BOARD_ROWS - 1
 const BOARD_WIDTH* = TILE_WIDTH * BOARD_COLUMNS
 const Y_SPACE* = TILE_HEIGHT - TILE_THICKNESS
 const BOARD_HEIGHT* = Y_SPACE * BOARD_ROWS
+const WHITE* = color(0xFF, 0xFF, 0xFF, 0xFF)
+const YELLOW* = color(0xFF, 0xFF, 0x00, 0xFF)
 
 
 const SCENE_LIFE_CYCLE_SIZE = 6
@@ -66,6 +68,7 @@ type
     board: string
     coins: int
     lives: int
+    timer: int
 
   BoardEvent* = enum
     foundDirt,
