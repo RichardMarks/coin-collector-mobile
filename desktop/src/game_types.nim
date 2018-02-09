@@ -69,6 +69,7 @@ type
     coins: int
     lives: int
     timer: int
+    isStart: bool
 
   BoardEvent* = enum
     foundDirt,

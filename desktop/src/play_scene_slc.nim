@@ -2,6 +2,7 @@ import sdl2
 import sdl2.image
 import game_types
 import scene_management
+import math
 
 from text_renderer import renderTextCached
 from game_input import wasClicked
@@ -30,6 +31,10 @@ proc drawHUD(game: Game, tick:int) =
 proc onClick(game: Game) =
   let mx = game.mouse.x
   let my = game.mouse.y
+
+  if (game.state.isStart):
+    game.state.isStart = false
+    return
 
   if regionRects[0].contains(point(mx, my)):
     # clicked on board
@@ -78,18 +83,30 @@ proc updatePlayScene(scene: Scene, game: Game, tick:int) =
   if game.wasClicked():
     game.onClick()
 
-proc renderPlayScene(scene: Scene, game: Game, tick:int) =
-  # called on game render proc
+proc drawStartState(game: Game, tick: int) =
 
-  # render HUD initially
-  game.drawHUD(tick)
+  if round(tick / 10) mod 2 == 0:
+    game.renderTextCached("Touch to Start",  560, 360, WHITE)
+  else:
+    game.renderTextCached("Touch to Start",  560, 360, YELLOW)
 
+proc drawPlayState(game: Game) =
+  # called on isStart == false
   for y in 0..BOARD_YLIMIT:
     for x in 0..BOARD_XLIMIT:
       let cell = game.getBoardCell(x, y)
       var clip = cell.getTileClip()
       var dest = rect(BOARD_X + cint(x * TILE_WIDTH), BOARD_Y + cint(y * Y_SPACE), TILE_WIDTH, TILE_HEIGHT)
       game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
+
+proc renderPlayScene(scene: Scene, game: Game, tick:int) =
+  # called on game render proc
+  
+  if (game.state.isStart):
+    game.drawStartState(tick)
+  else:
+    game.drawHUD(tick)
+    game.drawPlayState()
 
 proc exitPlayScene(scene: Scene, game: Game, tick:int) =
   # exit animation / leave play scene here
