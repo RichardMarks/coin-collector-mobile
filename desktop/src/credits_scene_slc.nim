@@ -22,7 +22,12 @@ proc updateCreditsScene(scene: Scene, game: Game, tick:int) =
 
 proc renderCreditsScene(scene: Scene, game: Game, tick:int) =
   # called on game render proc
-  discard
+  game.renderTextCached("Thanks for playing!", 510, 260, WHITE)
+  game.renderTextCached("Created by:", 550, 340, WHITE)
+  game.renderTextCached("Richard Marks", 535, 400, WHITE)
+  game.renderTextCached("Stephen Collins", 530, 435, WHITE)
+  game.renderTextCached("Click to go back", 525, 570, WHITE)
+
 
 proc exitCreditsScene(scene: Scene, game: Game, tick:int) =
   # exit animation / leave credits scene here
