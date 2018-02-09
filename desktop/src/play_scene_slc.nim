@@ -2,7 +2,6 @@ import sdl2
 import sdl2.image
 import game_types
 import scene_management
-import math
 
 from text_renderer import renderTextCached
 from game_input import wasClicked
@@ -11,7 +10,12 @@ from game_state import getBoardCell, clickBoardCell, resetBoardState, STONE_TILE
 const BOARD_X*: cint = cint((SCREEN_W - BOARD_WIDTH) div 2)
 const BOARD_Y*: cint = cint((SCREEN_H - BOARD_HEIGHT) div 2)
 
-var tilesTexture: TexturePtr
+type
+  PlayMode = enum start, play, pause
+
+var 
+  tilesTexture: TexturePtr
+  playMode: PlayMode = PlayMode.start
 
 let regionRects: array[2, Rect] = [
   rect(BOARD_X, BOARD_Y, BOARD_WIDTH.cint, BOARD_HEIGHT.cint),
@@ -32,8 +36,8 @@ proc onClick(game: Game) =
   let mx = game.mouse.x
   let my = game.mouse.y
 
-  if (game.state.isStart):
-    game.state.isStart = false
+  if (playMode == PlayMode.start):
+    playMode = PlayMode.play
     return
 
   if regionRects[0].contains(point(mx, my)):
@@ -85,13 +89,13 @@ proc updatePlayScene(scene: Scene, game: Game, tick:int) =
 
 proc drawStartState(game: Game, tick: int) =
 
-  if round(tick / 10) mod 2 == 0:
+  if tick div 10 mod 2 == 0:
     game.renderTextCached("Touch to Start",  560, 360, WHITE)
   else:
     game.renderTextCached("Touch to Start",  560, 360, YELLOW)
 
 proc drawPlayState(game: Game) =
-  # called on isStart == false
+  # called on play mode
   for y in 0..BOARD_YLIMIT:
     for x in 0..BOARD_XLIMIT:
       let cell = game.getBoardCell(x, y)
@@ -101,12 +105,14 @@ proc drawPlayState(game: Game) =
 
 proc renderPlayScene(scene: Scene, game: Game, tick:int) =
   # called on game render proc
-  
-  if (game.state.isStart):
+  case playMode:
+  of PlayMode.start:
     game.drawStartState(tick)
-  else:
+  of PlayMode.play:
     game.drawHUD(tick)
     game.drawPlayState()
+  else:
+    discard
 
 proc exitPlayScene(scene: Scene, game: Game, tick:int) =
   # exit animation / leave play scene here
