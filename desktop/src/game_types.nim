@@ -60,7 +60,7 @@ type
 
   MouseCoordinate* = tuple[x, y:int]
 
-  SceneLifeCycleProc* = proc(scene: Scene, game: Game, tick:int)
+  SceneLifeCycleProc* = proc(scene: Scene, game: Game, tick: float)
 
   SceneLifeCycle* = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
 

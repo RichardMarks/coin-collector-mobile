@@ -7,30 +7,44 @@ from text_renderer import renderTextCached
 from game_input import wasClicked
 from game_state import getBoardCell, clickBoardCell, resetBoardState, STONE_TILE, DIRT_TILE, PIT_TILE, COIN_TILE
 
-const BOARD_X*: cint = cint((SCREEN_W - BOARD_WIDTH) div 2)
-const BOARD_Y*: cint = cint((SCREEN_H - BOARD_HEIGHT) div 2)
+# this creates a gap between the tiles of the board when rendering
+const XADJUSTMENT: cint = 3
+const YADJUSTMENT: cint = 8
+
+# because of the spacing between the tiles, we have to calculate the adjusted rendered size
+const BOARD_WIDTH_ADJUSTED: cint = BOARD_WIDTH + (XADJUSTMENT * BOARD_COLUMNS)
+const BOARD_HEIGHT_ADJUSTED: cint = BOARD_HEIGHT + (YADJUSTMENT * BOARD_ROWS)
+
+# because we want the board to be rendered in the center of the screen, we have to use the adjusted values
+const BOARD_X*: cint = cint((SCREEN_W - BOARD_WIDTH_ADJUSTED) div 2)
+const BOARD_Y*: cint = cint((SCREEN_H - BOARD_HEIGHT_ADJUSTED) div 2)
 
 type
   PlayMode = enum start, play, pause
 
-var 
+var
   tilesTexture: TexturePtr
   playMode: PlayMode = PlayMode.start
+  elapsedTime: float
+  dimmerTexture: TexturePtr
+  dimmerRect: Rect
+  playTime: float
 
 let regionRects: array[2, Rect] = [
-  rect(BOARD_X, BOARD_Y, BOARD_WIDTH.cint, BOARD_HEIGHT.cint),
+  rect(BOARD_X, BOARD_Y, BOARD_WIDTH_ADJUSTED.cint, BOARD_HEIGHT_ADJUSTED.cint),
   rect(0, 0, 120, 40)
 ]
 
-proc drawHUD(game: Game, tick:int) =
+proc drawHUD(game: Game, tick: float) =
   let
     lives: string = $game.state.lives
     coins: string = $game.state.coins
     timer: string = $game.state.timer
 
-  game.renderTextCached("LIVES: " & lives,  325, 65, WHITE)
-  game.renderTextCached("SCORE: " & coins, 325, 100, WHITE)
-  game.renderTextCached("TIME: " & timer, 800, 65, WHITE)
+  const HUD_Y = 65 - 30
+  game.renderTextCached("LIVES: " & lives,  325, HUD_Y, WHITE)
+  game.renderTextCached("SCORE: " & coins, 325, HUD_Y + 35, WHITE)
+  game.renderTextCached("TIME: " & timer, 800, HUD_Y, WHITE)
 
 proc onClick(game: Game) =
   let mx = game.mouse.x
@@ -42,8 +56,8 @@ proc onClick(game: Game) =
 
   if regionRects[0].contains(point(mx, my)):
     # clicked on board
-    let x: int = (mx - BOARD_X) div TILE_WIDTH
-    let y: int = (my - BOARD_Y) div Y_SPACE
+    let x: int = (mx - BOARD_X) div (TILE_WIDTH + XADJUSTMENT)
+    let y: int = (my - BOARD_Y) div (Y_SPACE + YADJUSTMENT)
     # echo "clicking tile @[" & $x & ", " & $y & "]"
     let boardEvent = game.clickBoardCell(x, y)
     case boardEvent
@@ -69,30 +83,60 @@ proc getTileClip(cell:char): Rect =
   of COIN_TILE: result = rect(64, 64, 64, 64)
   else: discard
 
-proc registerPlayScene(scene: Scene, game: Game, tick:int) =
+proc registerPlayScene(scene: Scene, game: Game, tick: float) =
   # load assets here
   echo "registering play scene"
   echo "loading tiles.png"
   tilesTexture = game.renderer.loadTexture("../tiles.png")
 
-proc enterPlayScene(scene: Scene, game: Game, tick:int) =
+  # create a 2x2 texture, fill it with black, enable alpha blend mode
+  dimmerTexture = createTexture(game.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STATIC, 2, 2)
+  if dimmerTexture.isNil:
+    raise SystemError.newException("Failed to create dimmerTexture")
+
+  var blackFill: array[4, tuple[r,g,b,a:uint8]] = [
+    (0'u8, 0'u8, 0'u8, 0xFF'u8),
+    (0'u8, 0'u8, 0'u8, 0xFF'u8),
+    (0'u8, 0'u8, 0'u8, 0xFF'u8),
+    (0'u8, 0'u8, 0'u8, 0xFF'u8)
+  ]
+  dimmerTexture.updateTexture(nil, addr blackFill, (sizeof(Color) * 2).cint)
+  dimmerTexture.setTextureBlendMode(BlendMode_Blend)
+
+  # we will render the 2x2 texture to stretch across the whole screen
+  dimmerRect = rect(0, 0, SCREEN_W, SCREEN_H)
+
+proc enterPlayScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show play scene here
   echo "entering play scene"
 
-  game.renderer.setDrawColor(r = 0x30, g = 0x50, b = 0x90)
+  # game.renderer.setDrawColor(r = 0x30, g = 0x50, b = 0x90)
+  game.renderer.setDrawColor(r = 0x00, g = 0x00, b = 0x00)
+  elapsedTime = 0
 
-proc updatePlayScene(scene: Scene, game: Game, tick:int) =
+proc updatePlayScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
+  elapsedTime += tick
+
+  case playMode
+  of PlayMode.play:
+    playTime += tick
+    if playTime >= 1:
+      playTime = 0
+      game.state.timer -= 1
+      if game.state.timer <= 0:
+        game.state.timer = 0
+        game.sceneManager.enter("gameover")
+  else: discard
 
   if game.wasClicked():
     game.onClick()
 
-proc drawStartState(game: Game, tick: int) =
-
-  if tick div 10 mod 2 == 0:
-    game.renderTextCached("Touch to Start",  560, 360, WHITE)
+proc drawStartState(game: Game, tick: float) =
+  if (elapsedTime * 30).int div 10 mod 2 == 0:
+    game.renderTextCached("Touch to Start", 560, 360, WHITE)
   else:
-    game.renderTextCached("Touch to Start",  560, 360, YELLOW)
+    game.renderTextCached("Touch to Start", 560, 360, YELLOW)
 
 proc drawPlayState(game: Game) =
   # called on play mode
@@ -100,25 +144,31 @@ proc drawPlayState(game: Game) =
     for x in 0..BOARD_XLIMIT:
       let cell = game.getBoardCell(x, y)
       var clip = cell.getTileClip()
-      var dest = rect(BOARD_X + cint(x * TILE_WIDTH), BOARD_Y + cint(y * Y_SPACE), TILE_WIDTH, TILE_HEIGHT)
+      var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT)), TILE_WIDTH, TILE_HEIGHT)
       game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
 
-proc renderPlayScene(scene: Scene, game: Game, tick:int) =
+proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   # called on game render proc
   case playMode:
   of PlayMode.start:
+    game.drawPlayState()
+    game.drawHUD(tick)
+
+    # draw a dimmer texture to fill the screen at 120% opacity
+    dimmerTexture.setTextureAlphaMod(120)
+    copy(game.renderer, dimmerTexture, nil, addr dimmerRect)
     game.drawStartState(tick)
   of PlayMode.play:
-    game.drawHUD(tick)
     game.drawPlayState()
+    game.drawHUD(tick)
   else:
     discard
 
-proc exitPlayScene(scene: Scene, game: Game, tick:int) =
+proc exitPlayScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave play scene here
   echo "exiting play scene"
 
-proc destroyPlayScene(scene: Scene, game: Game, tick:int) =
+proc destroyPlayScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
   echo "destroy play scene"
   destroyTexture(tilesTexture)
