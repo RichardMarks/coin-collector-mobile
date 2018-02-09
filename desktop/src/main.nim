@@ -85,7 +85,7 @@ proc main() =
     y = SDL_WINDOWPOS_CENTERED,
     w = 1280,
     h = 720,
-    flags = SDL_WINDOW_SHOWN)
+    flags = SDL_WINDOW_SHOWN or SDL_WINDOW_RESIZABLE)
   sdlFailIf(window.isNil):
     "Failed to create window"
   defer:
@@ -115,6 +115,9 @@ proc main() =
       playScene
     ]:
       game.sceneManager.destroy(scene.name)
+
+  discard renderer.setLogicalSize(1280, 720)
+  window.maximizeWindow()
 
   while not game.inputs[Input.quit]:
     game.handleInput()
