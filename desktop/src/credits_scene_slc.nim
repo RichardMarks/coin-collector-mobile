@@ -5,22 +5,22 @@ import scene_management
 from text_renderer import renderTextCached
 from game_input import wasClicked
 
-proc registerCreditsScene(scene: Scene, game: Game, tick:int) =
+proc registerCreditsScene(scene: Scene, game: Game, tick: float) =
   # load assets here
   echo "registering credits scene"
 
-proc enterCreditsScene(scene: Scene, game: Game, tick:int) =
+proc enterCreditsScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show credits scene here
   echo "entering credits scene"
 
   game.renderer.setDrawColor(r = 0x90, g = 0x30, b = 0x50)
 
-proc updateCreditsScene(scene: Scene, game: Game, tick:int) =
+proc updateCreditsScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
   if game.wasClicked():
     game.sceneManager.enter("title")
 
-proc renderCreditsScene(scene: Scene, game: Game, tick:int) =
+proc renderCreditsScene(scene: Scene, game: Game, tick: float) =
   # called on game render proc
   game.renderTextCached("Thanks for playing!", 510, 260, WHITE)
   game.renderTextCached("Created by:", 550, 340, WHITE)
@@ -29,11 +29,11 @@ proc renderCreditsScene(scene: Scene, game: Game, tick:int) =
   game.renderTextCached("Click to go back", 525, 570, WHITE)
 
 
-proc exitCreditsScene(scene: Scene, game: Game, tick:int) =
+proc exitCreditsScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave credits scene here
   echo "exiting credits scene"
 
-proc destroyCreditsScene(scene: Scene, game: Game, tick:int) =
+proc destroyCreditsScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
   echo "destroy credits scene"
 

@@ -15,18 +15,18 @@ type
 
 var activeButton: TitleButton = TitleButton.none
 
-proc registerTitleScene(scene: Scene, game: Game, tick:int) =
+proc registerTitleScene(scene: Scene, game: Game, tick: float) =
   # load assets here
   echo "registering title scene"
 
-proc enterTitleScene(scene: Scene, game: Game, tick:int) =
+proc enterTitleScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show title scene here
   echo "entering title scene"
 
   game.getInitialState()
   game.renderer.setDrawColor(r = 0x50, g = 0x30, b = 0x90)
 
-proc updateTitleScene(scene: Scene, game: Game, tick:int) =
+proc updateTitleScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
 
   # the mouse position is constantly tracked by handleInput in game_input.nim
@@ -70,7 +70,7 @@ proc renderButton(game: Game, label: string, x, y: int, isActive: bool) =
     textColor = YELLOW
   game.renderTextCached(label, x.cint, y.cint, textColor)
 
-proc renderTitleScene(scene: Scene, game: Game, tick:int) =
+proc renderTitleScene(scene: Scene, game: Game, tick: float) =
   # called on game render proc
 
   game.renderTextCached("Coin Collector", 560, 220, WHITE)
@@ -78,11 +78,11 @@ proc renderTitleScene(scene: Scene, game: Game, tick:int) =
   game.renderButton("Credits", 608, 442, activeButton == TitleButton.credits)
   game.renderButton("Quit", 625, 530, activeButton == TitleButton.quit)
 
-proc exitTitleScene(scene: Scene, game: Game, tick:int) =
+proc exitTitleScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave title scene here
   echo "exiting title scene"
 
-proc destroyTitleScene(scene: Scene, game: Game, tick:int) =
+proc destroyTitleScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
   echo "destroy title scene"
 

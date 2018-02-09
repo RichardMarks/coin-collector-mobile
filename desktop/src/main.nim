@@ -39,22 +39,21 @@ proc newGame(renderer: RendererPtr): Game =
   # load the initial scene
   result.sceneManager.enter("title")
 
-proc update(game: Game, tick: int) =
+proc update(game: Game, tick: float) =
   let scene = game.sceneManager.current
   if scene != nil:
     scene.onUpdate(scene, game, tick)
   else:
     game.inputs[Input.quit] = true
 
-proc render(game: Game, tick: int) =
+proc render(game: Game, tick: float) =
   const WHITE = color(0xFF, 0xFF, 0xFF, 0xFF)
 
   game.renderer.clear()
   let scene = game.sceneManager.current
   if scene != nil:
     scene.onRender(scene, game, tick)
-
-    game.renderTextCached("[" & scene.name & "]", 0, 0, WHITE)
+    # game.renderTextCached("[" & scene.name & "]", 0, 0, WHITE)
   else:
     game.renderTextCached("[NO SCENE]", 0, 0, WHITE)
   game.renderer.present()
@@ -105,6 +104,7 @@ proc main() =
     game = newGame(renderer)
     startTime = epochTime()
     lastTick = 0
+    lastTime = epochTime()
 
   defer:
     # cleanup the scenes when the main proc exits
@@ -121,11 +121,16 @@ proc main() =
 
   while not game.inputs[Input.quit]:
     game.handleInput()
-    let newTick = int((epochTime() - startTime) * 50)
-    for tick in lastTick+1..newTick:
-      game.update(tick)
-    lastTick = newTick
-    game.render(lastTick)
+    let newTime = epochTime()
+    if newTime - lastTime < 1:
+      var dt = (newTime - lastTime)
+      game.update(dt)
+    lastTime = newTime
+    # let newTick = int((epochTime() - startTime) * 50)
+    # for tick in lastTick+1..newTick:
+    #   game.update(tick)
+    # lastTick = newTick
+    game.render(lastTime)
 
 when isMainModule:
   main()
