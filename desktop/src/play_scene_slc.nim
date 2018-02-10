@@ -21,6 +21,11 @@ const BOARD_Y*: cint = cint((SCREEN_H - BOARD_HEIGHT_ADJUSTED) div 2)
 
 type
   PlayMode = enum start, play, pause
+  PauseButton = enum
+    none,
+    pauseMode,
+
+var activeButton: PauseButton = PauseButton.none
 
 var
   tilesTexture: TexturePtr
@@ -41,7 +46,7 @@ proc drawHUD(game: Game, tick: float) =
     coins: string = $game.state.coins
     timer: string = $game.state.timer
 
-  const HUD_Y = 65 - 30
+  const HUD_Y = 35
   game.renderTextCached("LIVES: " & lives,  325, HUD_Y, WHITE)
   game.renderTextCached("SCORE: " & coins, 325, HUD_Y + 35, WHITE)
   game.renderTextCached("TIME: " & timer, 800, HUD_Y, WHITE)
@@ -50,10 +55,16 @@ proc onClick(game: Game) =
   let mx = game.mouse.x
   let my = game.mouse.y
 
-  if (playMode == PlayMode.start):
+  echo "mx: " & $mx, "my: " & $my
+
+  if (playMode == PlayMode.start or playMode == PlayMode.pause):
     playMode = PlayMode.play
     return
 
+  if mx >= 100 and mx <= 200 and my >= 250 and my <= 400:
+    playMode = PlayMode.pause
+    return
+  
   if regionRects[0].contains(point(mx, my)):
     # clicked on board
     let x: int = (mx - BOARD_X) div (TILE_WIDTH + XADJUSTMENT)
@@ -114,12 +125,28 @@ proc enterPlayScene(scene: Scene, game: Game, tick: float) =
   game.renderer.setDrawColor(r = 0x00, g = 0x00, b = 0x00)
   elapsedTime = 0
 
+proc renderButton(game: Game, label: string, x, y: int, isActive: bool) =
+  ## renders a button (white text label by default, yellow text label for hover)
+  # # echo "rendering  button - isActive:", $isActive
+  var textColor = WHITE
+  if isActive:
+    textColor = YELLOW
+  echo "button text color: ", textColor
+  game.renderTextCached(label, x.cint, y.cint, textColor)
+
 proc updatePlayScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
   elapsedTime += tick
 
+  let mx = game.mouse.x
+  let my = game.mouse.y
+  
   case playMode
   of PlayMode.play:
+    activeButton = PauseButton.none
+    if mx >= 100 and mx <= 200 and my >= 200 and my <= 400:
+      activeButton = PauseButton.pauseMode
+      echo "in box, activeButton: ", activeButton
     playTime += tick
     if playTime >= 1:
       playTime = 0
@@ -138,6 +165,9 @@ proc drawStartState(game: Game, tick: float) =
   else:
     game.renderTextCached("Touch to Start", 560, 360, YELLOW)
 
+proc drawPauseState(game: Game) =
+  game.renderTextCached("Touch to Continue", 560, 360, WHITE)
+
 proc drawPlayState(game: Game) =
   # called on play mode
   for y in 0..BOARD_YLIMIT:
@@ -153,7 +183,7 @@ proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   of PlayMode.start:
     game.drawPlayState()
     game.drawHUD(tick)
-
+    game.renderButton("Pause Game", 100, 300, false)
     # draw a dimmer texture to fill the screen at 120% opacity
     dimmerTexture.setTextureAlphaMod(120)
     copy(game.renderer, dimmerTexture, nil, addr dimmerRect)
@@ -161,6 +191,17 @@ proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   of PlayMode.play:
     game.drawPlayState()
     game.drawHUD(tick)
+    game.renderButton("Pause Game", 100, 300, activeButton == PauseButton.pauseMode)
+
+  of PlayMode.pause:
+    game.drawPlayState()
+    game.drawHUD(tick)
+    game.renderButton("Pause Game", 100, 300, false)
+
+    # draw a dimmer texture to fill the screen at 120% opacity
+    dimmerTexture.setTextureAlphaMod(120)
+    copy(game.renderer, dimmerTexture, nil, addr dimmerRect)
+    game.drawPauseState()
   else:
     discard
 

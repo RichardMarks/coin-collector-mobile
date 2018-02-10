@@ -102,9 +102,9 @@ proc main() =
 
   var
     game = newGame(renderer)
-    startTime = epochTime()
-    lastTick = 0
     lastTime = epochTime()
+    # startTime = epochTime()
+    # lastTick = 0
 
   defer:
     # cleanup the scenes when the main proc exits
