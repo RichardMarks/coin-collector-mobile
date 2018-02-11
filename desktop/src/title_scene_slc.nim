@@ -1,8 +1,8 @@
-import sdl2
+import sdl2, sdl2.ttf
 import game_types
 import scene_management
 
-from text_renderer import renderTextCached
+from text_renderer import renderTextCached, TextObject, newTextObject, render, setText, setColor, setPivot, setScale, containsPoint
 from game_input import wasClicked
 from game_state import getInitialState
 
@@ -13,15 +13,58 @@ type
     credits,
     quit
 
-var activeButton: TitleButton = TitleButton.none
+var
+  activeButton: TitleButton = TitleButton.none
+  gameNameText: TextObject
+  playText: TextObject
+  creditsText: TextObject
+  quitText: TextObject
+  gameNameFont: FontPtr
 
 proc registerTitleScene(scene: Scene, game: Game, tick: float) =
   # load assets here
-  echo "registering title scene"
+
+  gameNameFont = openFont("../talacha.ttf", 120)
+  sdlFailIf(gameNameFont.isNil): "Failed to load talacha.ttf"
+
+  gameNameText = newTextObject(game.renderer, gameNameFont, WHITE)
+  playText = newTextObject(game.renderer, game.menuItemFont, WHITE)
+  creditsText = newTextObject(game.renderer, game.menuItemFont, WHITE)
+  quitText = newTextObject(game.renderer, game.menuItemFont, WHITE)
+
+  gameNameText.setText("Coin Collector")
+
+  playText.setText("Play Game")
+  creditsText.setText("Credits")
+  quitText.setText("Quit")
+
+  # divide the screen in 2 halves vertically
+  const CENTER_Y = SCREEN_H div 2
+
+  # divide the bottom half by 1 + number of menu items
+  # to equally distribute the menu items in the space
+  const BOTTOM_SPACING = CENTER_Y div 4
+
+  # center all text on x
+  # position each menu item in the correct location
+  let centerX: cint = SCREEN_W div 2
+  for index, txt in [
+    gameNameText,
+    playText,
+    creditsText,
+    quitText
+  ]:
+    txt.setPivot(0.5, 0.5)
+    txt.x = centerX
+
+    # menu items only
+    if txt != gameNameText:
+      txt.y = CENTER_Y + BOTTOM_SPACING * index
+
+  gameNameText.y = 220
 
 proc enterTitleScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show title scene here
-  echo "entering title scene"
 
   game.getInitialState()
   game.renderer.setDrawColor(r = 0x50, g = 0x30, b = 0x90)
@@ -31,24 +74,14 @@ proc updateTitleScene(scene: Scene, game: Game, tick: float) =
 
   # the mouse position is constantly tracked by handleInput in game_input.nim
   # grab a local reference to the mouse position
-  let mx = game.mouse.x
-  let my = game.mouse.y
-
-  # button hitboxes - these values were determined manually..
-  # we could refactor this, but I don't think we need to
-
-  # PLAY:    left: 571, top: 356, right: 734, bottom: 393
-  # CREDITS: left: 594, top: 435, right: 712, bottom: 480
-  # QUIT:    left: 611, top: 526, right: 696, bottom: 569
+  let mx: cint = game.mouse.x.cint
+  let my: cint = game.mouse.y.cint
 
   # determine which button is active using simple if mouse coordinate within rectangle logic
-  activeButton = TitleButton.none
-  if mx >= 571 and mx <= 734 and my >= 356 and my <= 393:
-    activeButton = TitleButton.play
-  if mx >= 594 and mx <= 712 and my >= 435 and my <= 480:
-    activeButton = TitleButton.credits
-  if mx >= 611 and mx <= 696 and my >= 526 and my <= 569:
-    activeButton = TitleButton.quit
+  if playText.containsPoint(mx, my): activeButton = TitleButton.play
+  elif creditsText.containsPoint(mx, my): activeButton = TitleButton.credits
+  elif quitText.containsPoint(mx, my): activeButton = TitleButton.quit
+  else: activeButton = TitleButton.none
 
   # if the mouse was clicked handle each button's click as needed
   if game.wasClicked():
@@ -63,28 +96,28 @@ proc updateTitleScene(scene: Scene, game: Game, tick: float) =
       game.sceneManager.exit(scene.name)
     else: discard
 
-proc renderButton(game: Game, label: string, x, y: int, isActive: bool) =
-  ## renders a button (white text label by default, yellow text label for hover)
-  var textColor = WHITE
-  if isActive:
-    textColor = YELLOW
-  game.renderTextCached(label, x.cint, y.cint, textColor)
+proc renderButton(textObj: TextObject, matchActive: TitleButton) =
+  if matchActive == activeButton:
+    textObj.setColor(YELLOW)
+  else:
+    textObj.setColor(WHITE)
+  textObj.render()
 
 proc renderTitleScene(scene: Scene, game: Game, tick: float) =
   # called on game render proc
 
-  game.renderTextCached("Coin Collector", 560, 220, WHITE)
-  game.renderButton("Play Game", 585, 358, activeButton == TitleButton.play)
-  game.renderButton("Credits", 608, 442, activeButton == TitleButton.credits)
-  game.renderButton("Quit", 625, 530, activeButton == TitleButton.quit)
+  gameNameText.render()
+  playText.renderButton(TitleButton.play)
+  creditsText.renderButton(TitleButton.credits)
+  quitText.renderButton(TitleButton.quit)
 
 proc exitTitleScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave title scene here
-  echo "exiting title scene"
+  discard
 
 proc destroyTitleScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
-  echo "destroy title scene"
+  gameNameFont.close()
 
 let titleSlc* = [
   registerTitleScene.SceneLifeCycleProc,

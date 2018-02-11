@@ -5,11 +5,11 @@ from text_renderer import renderTextCached
 
 proc registerGameoverScene(scene: Scene, game: Game, tick: float) =
   # load assets here
-  echo "registering gameover scene"
+  discard
 
 proc enterGameoverScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show gameover scene here
-  echo "entering gameover scene"
+  discard
 
 proc updateGameoverScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
@@ -29,11 +29,11 @@ proc renderGameoverScene(scene: Scene, game: Game, tick: float) =
 
 proc exitGameoverScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave gameover scene here
-  echo "exiting gameover scene"
+  discard
 
 proc destroyGameoverScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
-  echo "destroy gameover scene"
+  discard
 
 let gameoverSlc* = [
   registerGameoverScene.SceneLifeCycleProc,

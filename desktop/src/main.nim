@@ -23,9 +23,12 @@ proc newGame(renderer: RendererPtr): Game =
   result.getInitialState()
   result.sceneManager = newGameSceneManager(result)
   result.renderer = renderer
+
   result.font = openFont("../DejaVuSans.ttf", 24)
-  sdlFailIf(result.font.isNil):
-    "Failed to load font"
+  sdlFailIf(result.font.isNil): "Failed to load DejaVuSans.ttf"
+
+  result.menuItemFont = openFont("../kaiju.ttf", 48)
+  sdlFailIf(result.menuItemFont.isNil): "Failed to load kaiju.ttf"
 
   # register all game scenes
   for scene in [
@@ -37,7 +40,7 @@ proc newGame(renderer: RendererPtr): Game =
     result.sceneManager.register(scene)
 
   # load the initial scene
-  result.sceneManager.enter("title")
+  result.sceneManager.enter("credits")
 
 proc update(game: Game, tick: float) =
   let scene = game.sceneManager.current
@@ -92,7 +95,7 @@ proc main() =
 
   let renderer = window.createRenderer(
     index = -1,
-    flags = sdl2.Renderer_Accelerated or sdl2.Renderer_PresentVsync)
+    flags = sdl2.Renderer_Accelerated or sdl2.Renderer_PresentVsync or sdl2.Renderer_TargetTexture)
   sdlFailIf(renderer.isNil):
     "Failed to create renderer"
   defer:
@@ -115,9 +118,11 @@ proc main() =
       playScene
     ]:
       game.sceneManager.destroy(scene.name)
+    game.menuItemFont.close()
+    game.font.close()
 
   discard renderer.setLogicalSize(1280, 720)
-  window.maximizeWindow()
+  # window.maximizeWindow()
 
   while not game.inputs[Input.quit]:
     game.handleInput()
