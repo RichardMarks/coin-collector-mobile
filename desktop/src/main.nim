@@ -40,7 +40,7 @@ proc newGame(renderer: RendererPtr): Game =
     result.sceneManager.register(scene)
 
   # load the initial scene
-  result.sceneManager.enter("credits")
+  result.sceneManager.enter("title")
 
 proc update(game: Game, tick: float) =
   let scene = game.sceneManager.current
