@@ -2,7 +2,7 @@ import sdl2, sdl2.ttf
 import game_types
 import scene_management
 
-from text_renderer import renderTextCached, TextObject, newTextObject, render, setText, setColor, setPivot, setScale, containsPoint
+from text_renderer import TextObject, newTextObject, render, setText, setColor, setPivot, setScale, containsPoint
 from game_input import wasClicked
 from game_state import getInitialState
 
