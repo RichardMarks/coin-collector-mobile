@@ -200,7 +200,6 @@ proc render*(textObj: TextObject) =
 
   let texture: TexturePtr = textObj.properties.texture
   if not texture.isNil:
-    let renderer: RendererPtr = textObj.renderer
     let src: ptr Rect = addr textObj.properties.src
     let pvt: ptr Rect = addr textObj.properties.pvt
     let dst: ptr Rect = addr textObj.properties.dst
