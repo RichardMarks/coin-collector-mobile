@@ -82,6 +82,7 @@ type
     inputPressed*: array[Input, bool]
     renderer*: RendererPtr
     font*: FontPtr
+    menuItemFont*: FontPtr
     mouse*: MouseCoordinate
     state*: GameState
 

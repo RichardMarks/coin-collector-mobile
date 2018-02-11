@@ -21,8 +21,12 @@ const BOARD_Y*: cint = cint((SCREEN_H - BOARD_HEIGHT_ADJUSTED) div 2)
 
 type
   PlayMode = enum start, play, pause
+  PauseButton = enum
+    none,
+    pauseMode
 
 var
+  activeButton: PauseButton = PauseButton.none
   tilesTexture: TexturePtr
   playMode: PlayMode = PlayMode.start
   elapsedTime: float
@@ -41,7 +45,7 @@ proc drawHUD(game: Game, tick: float) =
     coins: string = $game.state.coins
     timer: string = $game.state.timer
 
-  const HUD_Y = 65 - 30
+  const HUD_Y = 35
   game.renderTextCached("LIVES: " & lives,  325, HUD_Y, WHITE)
   game.renderTextCached("SCORE: " & coins, 325, HUD_Y + 35, WHITE)
   game.renderTextCached("TIME: " & timer, 800, HUD_Y, WHITE)
@@ -50,8 +54,14 @@ proc onClick(game: Game) =
   let mx = game.mouse.x
   let my = game.mouse.y
 
-  if (playMode == PlayMode.start):
+  # echo "mx: " & $mx, "my: " & $my
+
+  if (playMode == PlayMode.start or playMode == PlayMode.pause):
     playMode = PlayMode.play
+    return
+
+  if activeButton == PauseButton.pauseMode:
+    playMode = PlayMode.pause
     return
 
   if regionRects[0].contains(point(mx, my)):
@@ -85,8 +95,6 @@ proc getTileClip(cell:char): Rect =
 
 proc registerPlayScene(scene: Scene, game: Game, tick: float) =
   # load assets here
-  echo "registering play scene"
-  echo "loading tiles.png"
   tilesTexture = game.renderer.loadTexture("../tiles.png")
 
   # create a 2x2 texture, fill it with black, enable alpha blend mode
@@ -108,18 +116,33 @@ proc registerPlayScene(scene: Scene, game: Game, tick: float) =
 
 proc enterPlayScene(scene: Scene, game: Game, tick: float) =
   # enter animation / show play scene here
-  echo "entering play scene"
 
   # game.renderer.setDrawColor(r = 0x30, g = 0x50, b = 0x90)
   game.renderer.setDrawColor(r = 0x00, g = 0x00, b = 0x00)
   elapsedTime = 0
 
+var labelColor: Color = WHITE
+proc renderButton(game: Game, label: string, x, y: int, isActive: bool) =
+  ## renders a button (white text label by default, yellow text label for hover)
+  if isActive:
+    labelColor = YELLOW
+  game.renderTextCached(label, x.cint, y.cint, labelColor)
+
+
 proc updatePlayScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
   elapsedTime += tick
 
+  let mx = game.mouse.x
+  let my = game.mouse.y
+  activeButton = PauseButton.none
+  if mx >= 95 and mx <= 256 and my >= 300 and my <= 329:
+    activeButton = PauseButton.pauseMode
+
   case playMode
   of PlayMode.play:
+
+      # echo "in box, activeButton: ", activeButton
     playTime += tick
     if playTime >= 1:
       playTime = 0
@@ -138,6 +161,9 @@ proc drawStartState(game: Game, tick: float) =
   else:
     game.renderTextCached("Touch to Start", 560, 360, YELLOW)
 
+proc drawPauseState(game: Game) =
+  game.renderTextCached("P A U S E D", 560, 360, WHITE)
+
 proc drawPlayState(game: Game) =
   # called on play mode
   for y in 0..BOARD_YLIMIT:
@@ -153,7 +179,7 @@ proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   of PlayMode.start:
     game.drawPlayState()
     game.drawHUD(tick)
-
+    game.renderButton("Pause Game", 100, 300, false)
     # draw a dimmer texture to fill the screen at 120% opacity
     dimmerTexture.setTextureAlphaMod(120)
     copy(game.renderer, dimmerTexture, nil, addr dimmerRect)
@@ -161,16 +187,31 @@ proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   of PlayMode.play:
     game.drawPlayState()
     game.drawHUD(tick)
+    game.renderButton("Pause Game", 100, 300, activeButton == PauseButton.pauseMode)
+
+  of PlayMode.pause:
+    game.drawPlayState()
+    game.drawHUD(tick)
+    # game.renderButton("Pause Game", 100, 300, false)
+
+    # draw a dimmer texture to fill the screen at 120% opacity
+    dimmerTexture.setTextureAlphaMod(120)
+    copy(game.renderer, dimmerTexture, nil, addr dimmerRect)
+    game.drawPauseState()
   else:
     discard
 
+  # debugging
+  var mx = game.mouse.x
+  var my = game.mouse.y
+  game.renderTextCached("" & $mx & ", " & $my, (mx + 32).cint, (my - 32).cint, WHITE)
+
 proc exitPlayScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave play scene here
-  echo "exiting play scene"
+  discard
 
 proc destroyPlayScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
-  echo "destroy play scene"
   destroyTexture(tilesTexture)
 
 let playSlc* = [
