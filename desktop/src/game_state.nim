@@ -94,3 +94,5 @@ proc clickBoardCell*(game: Game, x: int, y: int): BoardEvent =
     inc(game.state.coins)
     game.setBoardCell(x, y, DIRT_TILE)
     result = BoardEvent.takeCoin
+  else:
+    result = BoardEvent.noop

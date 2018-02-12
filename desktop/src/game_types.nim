@@ -71,6 +71,7 @@ type
     timer: int
 
   BoardEvent* = enum
+    noop,
     foundDirt,
     foundCoin,
     foundPit,
