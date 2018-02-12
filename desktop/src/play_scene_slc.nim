@@ -114,8 +114,8 @@ proc handleTakeCoinBoardEvent(game: Game, mx, my: cint) =
 
 proc handleBoardUpdate(game: Game, mx, my: cint) =
   # clicked on board
-  let x: int = (mx - BOARD_X) div (TILE_WIDTH + XADJUSTMENT)
-  let y: int = (my - BOARD_Y) div (Y_SPACE + YADJUSTMENT)
+  let x: int = clamp((mx - BOARD_X) div (TILE_WIDTH + XADJUSTMENT), 0, BOARD_COLUMNS - 1)
+  let y: int = clamp((my - BOARD_Y) div (Y_SPACE + YADJUSTMENT), 0, BOARD_ROWS - 1)
   # echo "clicking tile @[" & $x & ", " & $y & "]"
   let boardEvent = game.clickBoardCell(x, y)
   case boardEvent
