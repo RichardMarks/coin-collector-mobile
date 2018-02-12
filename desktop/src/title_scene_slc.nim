@@ -34,7 +34,7 @@ proc registerTitleScene(scene: Scene, game: Game, tick: float) =
 
   gameNameText.setText("Coin Collector")
 
-  playText.setText("Play Game")
+  playText.setText("Play")
   creditsText.setText("Credits")
   quitText.setText("Quit")
 
