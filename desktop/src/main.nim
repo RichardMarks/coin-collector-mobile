@@ -14,7 +14,7 @@ import game_types
 import scene_management
 from game_input import handleInput
 from game_state import getInitialState
-from scenes import titleScene, creditsScene, gameoverScene, playScene
+from scenes import titleScene, creditsScene, gameoverScene, playScene, highscoreScene, viewhighscoresScene
 
 from text_renderer import renderTextCached
 
@@ -35,7 +35,9 @@ proc newGame(renderer: RendererPtr): Game =
     titleScene,
     creditsScene,
     gameoverScene,
-    playScene
+    playScene,
+    highscoreScene,
+    viewhighscoresScene
   ]:
     result.sceneManager.register(scene)
 
@@ -115,7 +117,9 @@ proc main() =
       titleScene,
       creditsScene,
       gameoverScene,
-      playScene
+      playScene,
+      highscoreScene,
+      viewhighscoresScene
     ]:
       game.sceneManager.destroy(scene.name)
     game.menuItemFont.close()

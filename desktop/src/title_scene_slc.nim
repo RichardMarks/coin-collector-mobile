@@ -11,6 +11,7 @@ type
     none,
     play,
     credits,
+    highscores,
     quit
 
 var
@@ -18,6 +19,7 @@ var
   gameNameText: TextObject
   playText: TextObject
   creditsText: TextObject
+  highScoresText: TextObject
   quitText: TextObject
   gameNameFont: FontPtr
 
@@ -30,12 +32,14 @@ proc registerTitleScene(scene: Scene, game: Game, tick: float) =
   gameNameText = newTextObject(game.renderer, gameNameFont, WHITE)
   playText = newTextObject(game.renderer, game.menuItemFont, WHITE)
   creditsText = newTextObject(game.renderer, game.menuItemFont, WHITE)
+  highScoresText = newTextObject(game.renderer, game.menuItemFont, WHITE)
   quitText = newTextObject(game.renderer, game.menuItemFont, WHITE)
 
   gameNameText.setText("Coin Collector")
 
   playText.setText("Play")
   creditsText.setText("Credits")
+  highScoresText.setText("High Scores")
   quitText.setText("Quit")
 
   # divide the screen in 2 halves vertically
@@ -43,7 +47,7 @@ proc registerTitleScene(scene: Scene, game: Game, tick: float) =
 
   # divide the bottom half by 1 + number of menu items
   # to equally distribute the menu items in the space
-  const BOTTOM_SPACING = CENTER_Y div 4
+  const BOTTOM_SPACING = CENTER_Y div 5
 
   # center all text on x
   # position each menu item in the correct location
@@ -52,6 +56,7 @@ proc registerTitleScene(scene: Scene, game: Game, tick: float) =
     gameNameText,
     playText,
     creditsText,
+    highScoresText,
     quitText
   ]:
     txt.setPivot(0.5, 0.5)
@@ -80,6 +85,7 @@ proc updateTitleScene(scene: Scene, game: Game, tick: float) =
   # determine which button is active using simple if mouse coordinate within rectangle logic
   if playText.containsPoint(mx, my): activeButton = TitleButton.play
   elif creditsText.containsPoint(mx, my): activeButton = TitleButton.credits
+  elif highScoresText.containsPoint(mx, my): activeButton = TitleButton.highscores
   elif quitText.containsPoint(mx, my): activeButton = TitleButton.quit
   else: activeButton = TitleButton.none
 
@@ -92,6 +98,9 @@ proc updateTitleScene(scene: Scene, game: Game, tick: float) =
     of TitleButton.credits:
       game.sceneManager.exit(scene.name)
       game.sceneManager.enter("credits")
+    of TitleButton.highscores:
+      game.sceneManager.exit(scene.name)
+      game.sceneManager.enter("viewhighscores")
     of TitleButton.quit:
       game.sceneManager.exit(scene.name)
     else: discard
@@ -109,6 +118,7 @@ proc renderTitleScene(scene: Scene, game: Game, tick: float) =
   gameNameText.render()
   playText.renderButton(TitleButton.play)
   creditsText.renderButton(TitleButton.credits)
+  highScoresText.renderButton(TitleButton.highscores)
   quitText.renderButton(TitleButton.quit)
 
 proc exitTitleScene(scene: Scene, game: Game, tick: float) =

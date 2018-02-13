@@ -2,6 +2,7 @@ import game_types
 import scene_management
 from game_input import wasClicked
 from text_renderer import renderTextCached
+import scoring
 
 proc registerGameoverScene(scene: Scene, game: Game, tick: float) =
   # load assets here
@@ -13,8 +14,15 @@ proc enterGameoverScene(scene: Scene, game: Game, tick: float) =
 
 proc updateGameoverScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
+
+  # TODO: replace with better formula
+  let playerScore: int = game.state.coins * 10000
   if game.wasClicked():
-    game.sceneManager.enter("title")
+    if isTopTenScore(playerScore):
+      echo "entering high score enter..."
+      game.sceneManager.enter("highscore")
+    else:
+      game.sceneManager.enter("title")
 
 proc renderGameoverScene(scene: Scene, game: Game, tick: float) =
   # called on game render proc
