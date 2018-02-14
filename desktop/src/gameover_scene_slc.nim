@@ -16,7 +16,7 @@ proc updateGameoverScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
 
   # TODO: replace with better formula
-  let playerScore: int = game.state.coins * 10000
+  let playerScore = uint32(game.state.coins * 10000)
   if game.wasClicked():
     if isTopTenScore(playerScore):
       echo "entering high score enter..."

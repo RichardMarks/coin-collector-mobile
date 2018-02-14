@@ -64,16 +64,11 @@ type
 
   SceneLifeCycle* = array[SCENE_LIFE_CYCLE_SIZE, SceneLifeCycleProc]
 
-  HighScoreTuple* = ref (string, int)
-
-  HighScoreList* = seq[(HighScoreTuple)]
-
   GameState* = tuple
     board: string
     coins: int
     lives: int
     timer: int
-    highScoresList: HighScoreList
 
   BoardEvent* = enum
     noop,

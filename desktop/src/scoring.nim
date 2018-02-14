@@ -1,89 +1,124 @@
-import streams
-import algorithm
-import game_types
+type
+  HighScoreTableHeader* = tuple
+    fourcc: array[4, char]
+    numScores: uint32
+  HighScoreEntry* = tuple
+    initials: array[4, char]
+    score: uint32
+  
+  # assumes the binary file read from is the same size as this table structure
+  HighScoreTable* = tuple
+    header: HighScoreTableHeader
+    data: array[10, HighScoreEntry]
 
-const DATA_FILE* = "./desktop/src/data_file.dat"
+const HIGH_SCORES_DB: string = "hiscore.tbl"
 
-proc newHighScore*(name: string, score: int): HighScoreTuple =
-  new result
-  result[0] = name
-  result[1] = score
+proc writeNewHighScore*(newPlayerHighScore: HighScoreEntry, filename: string = HIGH_SCORES_DB) =
+  # assumes file will already exist, "old school programmers' high scores" apparently...
+  var fp = open(filename, fmRead)
+  var table: HighScoreTable
+  defer: 
+    fp.close()
 
-proc sortHighScoreList(highScoreList: var HighScoreList) =
-  highScoreList.sort(proc( scoreTuple1,scoreTuple2: HighScoreTuple): int =
-    result = cmp(scoreTuple2[1], scoreTuple1[1])
-    if result == 0:
-      result = cmp(scoreTuple2[1], scoreTuple1[1])
-    )
+  var bytesRead: int = readBuffer(fp, addr table, sizeof(table))
+  if bytesRead != sizeof(table):
+    raise SystemError.newException("Invalid high score table")
+  var pos: int = 0
+  while pos < 10:
+    if table.data[pos].score < newPlayerHighScore.score:
+      # echo "position to insert is " & $pos
+      for i in 0..<(9 - pos):
+        var dst: int = 9 - i
+        var src: int = 9 - (i + 1)
+        # echo "shift from " & $src & " to " & $dst
+        table.data[dst] = table.data[src]
+      table.data[pos] = newPlayerHighScore
+      break
+    pos += 1
+  # echo $table.data[0..<10]
+  fp.close()
+  var fpW = open(filename, fmWrite)
 
-proc loadHighScoreList*(fn: string): HighScoreList =
-  var s = newFileStream(fn, fmRead)
-  if (isNil(s)):
-    result = newSeq[HighScoreTuple]()
-  else:
-    result = newSeq[HighScoreTuple]()
-    while not s.atEnd:
-      let element = newHighScore(s.readStr(3).string, s.readInt64.int)
-      result.add(element)
-    s.close()
-    result.sortHighScoreList()
+  defer:
+    fpW.close()
 
-var highScoreList: HighScoreList = loadHighScoreList(DATA_FILE)
+  var bytesWritten: int = writeBuffer(fpW, addr table, sizeof(table))
+  if (bytesWritten == 0):
+    raise SystemError.newException("No high scores table data written")
 
+proc loadHighScores*(filename: string = HIGH_SCORES_DB): HighScoreTable =
+  var fp = open(filename, fmRead)
+  var table: HighScoreTable
+  var bytesRead: int = readBuffer(fp, addr table, sizeof(table))
+  echo "bytesRead: ", bytesRead
+  echo "sizeof(table): ", sizeof(table)
+  if bytesRead != sizeof(table):
+    raise SystemError.newException("Invalid high score table")
+  
+  defer: 
+    fp.close()
+  result = table
 
-proc storeHighScoreList*(fn: string, data: HighScoreList) =
-  var s = newFileStream(fn, fmWrite)
-  for playerScore in data:
-    s.write(playerScore[0])
-    s.write(playerScore[1])
-  s.close()
-
-proc isTopTenScore*(rawPlayerScore: int): bool =
-
-  if (len(highScoreList) == 0):
-    result = true
-  elif(highScoreList[len(highScoreList) - 1][1] < rawPlayerScore):
-    result = true
-  else:
-    result = false
-
-proc removeLowestHighScore(highScoreList: var HighScoreList) =
-  let lastIndex: int = highScoreList.len - 1
-  highScoreList.delete(lastIndex)
-
-proc addHighScore*(playerHighScore: HighScoreTuple) =
-  if(highScoreList[len(highScoreList) - 1][1] < playerHighScore[1]):
-    echo "add new player score"
-    if (len(highScoreList) >= 10):
-      highScoreList.removeLowestHighScore()
-
-    highScoreList.add(playerHighScore)
-
-  highScoreList.sortHighScoreList()
+proc isTopTenScore*(playerGameScore: uint32): bool =
+  var table: HighScoreTable = loadHighScores()
+  result = false
+  for score in table.data:
+    # echo $score.initials[0..2] & " - " & $score.score
+    if score.score < playerGameScore:
+      result = true
+      break
 
 
 when isMainModule:
 
-  var dataLoaded = loadHighScoreList("./desktop/src/data_file.dat")
+  # writeNewHighScore(HIGH_SCORES_FILE)
+  # # var fp = open("hiscore.tbl", fmRead)
+  # # defer: fp.close()
+  # # var table: HighScoreTable
+  # # var bytesRead: int = readBuffer(fp, addr table, sizeof(table))
+  # # if bytesRead != sizeof(table):
+  # #   raise SystemError.newException("Invalid high score table")
+  # echo $table.header.fourcc[0..3]
+  # echo $table.header.numScores
+  # for score in table.data:
+    # echo $score.initials[0..2] & " - " & $score.score
+  # var scores: array[10, int] = [1000, 500, 400, 200, 100, 50, 20, 10, 5, 1]
+  # const newPlayerScore: HighScoreEntry = (['A','F','K', '\0'], 84.uint32)
+  # # echo $table.data[0..<10]
+  # writeNewHighScore(HIGH_SCORES_FILE,newPlayerScore)
 
-  let player0 = newHighScore("ABC", 123)
-  let player1 = newHighScore("DEF", 99)
-  let player2 = newHighScore("JAC", 2455)
-  let player3 = newHighScore("WUT", 100)
-  let player4 = newHighScore("HUH", 150)
+  var table: HighScoreTable = loadHighScores()
+  for score in table.data:
+    echo $score.initials[0..2] & " - " & $score.score
 
-  let player5 = newHighScore("YES", 110)
-  let player6 = newHighScore("HGH", 115)
-
-  var data: HighScoreList = @[player0,player1,player2,player3,player4]
-
-  sortHighScoreList(data)
-
-  storeHighScoreList("./desktop/src/data_file.dat", data)
-
-  echo "data: ", repr(data)
-  # echo "data len: ", data.len
-  # for scoreTuple in data:
-  #   echo "scoreTuple", repr(scoreTuple)
-  # sort before storing
-  # store("highscores.dat", data)
+  # var score: int = 250
+  # var pos: int = 0
+  # while pos < 10:
+  #   if table.data[pos].score < newPlayerScore.score:
+  #     echo "position to insert is " & $pos
+  #     for i in 0..<(9 - pos):
+  #       var dst: int = 9 - i
+  #       var src: int = 9 - (i + 1)
+  #       echo "shift from " & $src & " to " & $dst
+  #       table.data[dst] = table.data[src]
+  #     table.data[pos] = newPlayerScore
+  #     break
+  #   pos += 1
+  # echo $table.data[0..<10]
+  
+  # var scores: array[10, int] = [1000, 500, 400, 200, 100, 50, 20, 10, 5, 1]
+  # echo $scores[0..<10]
+  # var score: int = 250
+  # var pos: int = 0
+  # while pos < 10:
+  #   if scores[pos] < score:
+  #     echo "position to insert is " & $pos
+  #     for i in 0..<(9 - pos):
+  #       var dst: int = 9 - i
+  #       var src: int = 9 - (i + 1)
+  #       echo "shift from " & $src & " to " & $dst
+  #       scores[dst] = scores[src]
+  #     scores[pos] = score
+  #     break
+  #   pos += 1
+  # echo $scores[0..<10]
