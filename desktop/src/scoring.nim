@@ -15,12 +15,12 @@ const HIGH_SCORES_DB: string = "hiscore.tbl"
 
 proc writeNewHighScore*(newPlayerHighScore: HighScoreEntry, filename: string = HIGH_SCORES_DB) =
   # assumes file will already exist, "old school programmers' high scores" apparently...
-  var fp = open(filename, fmRead)
+  let fp = open(filename, fmRead)
   var table: HighScoreTable
   defer: 
     fp.close()
 
-  var bytesRead: int = readBuffer(fp, addr table, sizeof(table))
+  let bytesRead: int = readBuffer(fp, addr table, sizeof(table))
   if bytesRead != sizeof(table):
     raise SystemError.newException("Invalid high score table")
   var pos: int = 0
@@ -28,8 +28,8 @@ proc writeNewHighScore*(newPlayerHighScore: HighScoreEntry, filename: string = H
     if table.data[pos].score < newPlayerHighScore.score:
       # echo "position to insert is " & $pos
       for i in 0..<(9 - pos):
-        var dst: int = 9 - i
-        var src: int = 9 - (i + 1)
+        let dst: int = 9 - i
+        let src: int = 9 - (i + 1)
         # echo "shift from " & $src & " to " & $dst
         table.data[dst] = table.data[src]
       table.data[pos] = newPlayerHighScore
@@ -37,21 +37,21 @@ proc writeNewHighScore*(newPlayerHighScore: HighScoreEntry, filename: string = H
     pos += 1
   # echo $table.data[0..<10]
   fp.close()
-  var fpW = open(filename, fmWrite)
+  let fpW = open(filename, fmWrite)
 
   defer:
     fpW.close()
 
-  var bytesWritten: int = writeBuffer(fpW, addr table, sizeof(table))
+  let bytesWritten: int = writeBuffer(fpW, addr table, sizeof(table))
   if (bytesWritten == 0):
     raise SystemError.newException("No high scores table data written")
 
 proc loadHighScores*(filename: string = HIGH_SCORES_DB): HighScoreTable =
-  var fp = open(filename, fmRead)
+  let fp = open(filename, fmRead)
   var table: HighScoreTable
-  var bytesRead: int = readBuffer(fp, addr table, sizeof(table))
-  echo "bytesRead: ", bytesRead
-  echo "sizeof(table): ", sizeof(table)
+  let bytesRead: int = readBuffer(fp, addr table, sizeof(table))
+  # echo "bytesRead: ", bytesRead
+  # echo "sizeof(table): ", sizeof(table)
   if bytesRead != sizeof(table):
     raise SystemError.newException("Invalid high score table")
   
@@ -60,7 +60,7 @@ proc loadHighScores*(filename: string = HIGH_SCORES_DB): HighScoreTable =
   result = table
 
 proc isTopTenScore*(playerGameScore: uint32): bool =
-  var table: HighScoreTable = loadHighScores()
+  let table: HighScoreTable = loadHighScores()
   result = false
   for score in table.data:
     # echo $score.initials[0..2] & " - " & $score.score
