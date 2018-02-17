@@ -11,7 +11,7 @@ type
     header: HighScoreTableHeader
     data: array[10, HighScoreEntry]
 
-const HIGH_SCORES_DB: string = "hiscore.tbl"
+const HIGH_SCORES_DB*: string = "hiscore.tbl"
 
 proc writeNewHighScore*(newPlayerHighScore: HighScoreEntry, filename: string = HIGH_SCORES_DB) =
   # assumes file will already exist, "old school programmers' high scores" apparently...

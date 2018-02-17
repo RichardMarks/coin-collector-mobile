@@ -36,10 +36,17 @@ const
   SELECTED_UNDERSCORE_Y: cint = cint(CENTER_Y * 1.5)
   MIDDLE_UNDERSCORE_X: cint = cint(CENTER_X - 55)
   RIGHT_UNDERSCORE_X: cint = cint(CENTER_X * 1.2 - 55)
+
+  SELECTED_CHAR_X: cint = cint(MIDDLE_UNDERSCORE_X + 30)
+  SELECTED_CHAR_Y: cint = cint(SELECTED_UNDERSCORE_Y - 125)
   
   ARROW_Y: cint = cint(CENTER_Y * 1.2)
   LEFT_ARROW_X: cint = cint(LEFT_UNDERSCORE_X - 55)
   RIGHT_ARROW_X: cint = cint(RIGHT_UNDERSCORE_X + 120)
+
+let 
+  alphabet: seq[string] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split(re"")
+  playerScore: uint32 = 12345 #$(game.state.coins * 1000)
 
 var
   arrowsTexture: TexturePtr
@@ -55,6 +62,8 @@ var
   rightUnderscoreObj: UnderScoreObject
   selectedUnderscoreObj: UnderScoreObject
 
+  playerHighScoreEntry: HighScoreEntry = ( ['\0','\0','\0', '\0'], playerScore.uint32)
+
   smallTextFont: FontPtr
   mediumTextFont: FontPtr
   selectedTextFont: FontPtr
@@ -65,6 +74,8 @@ var
   selectedIndex: int = 2
   mediumRightIndex: int = 3
   smallRightIndex: int = 4
+
+  playerInitials: array[3, int] = [-1, -1, -1]
 
   # scene text objects
   titleTextObj: TextObject
@@ -77,10 +88,6 @@ var
   mediumRightTextObj: TextObject
   smallLeftTextObj: TextObject
   smallRightTextObj: TextObject
-
-let 
-  alphabet: seq[string] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split(re"")
-  playerScore: string = $(12345) #$(game.state.coins * 1000)
 
 proc newArrowObject(renderer: RendererPtr, texture: TexturePtr, arrowType: ArrowType): ArrowObject =
   new result
@@ -115,7 +122,6 @@ proc newUnderscoreObject(renderer: RendererPtr, texture: TexturePtr, pos: Unders
     result.dst = rect(RIGHT_UNDERSCORE_X, TOP_UNDERSCORES_Y, 100, 100)
   of selected:
     result.dst = rect(MIDDLE_UNDERSCORE_X, SELECTED_UNDERSCORE_Y, 100, 100)
-  
   else:
     raise SystemError.newException("Invalid UnderscorePos supplied")
 
@@ -127,6 +133,13 @@ proc renderArrow(game: Game,arrowObj: ArrowObject ) =
 
 proc renderLetter(textObj: TextObject, index: int) =
   textObj.setText(alphabet[index])
+  textObj.render()
+
+proc renderEnteredInitial(textObj: TextObject, initialIndex: int) =
+  if initialIndex < 0:
+    textObj.setText(" ")
+  else:
+    textObj.setText(alphabet[initialIndex])
   textObj.render()
 
 proc registerHighscoreScene(scene: Scene, game: Game, tick: float) =
@@ -184,9 +197,9 @@ proc registerHighscoreScene(scene: Scene, game: Game, tick: float) =
 
   # TODO: replace hardcoding of score
 
-  scoreTextObj.setText(playerScore)
+  scoreTextObj.setText($playerScore)
   scoreTextObj.y = (CENTER_Y * 0.6).cint
-  scoreTextObj.x = (SCREEN_W div 2 - len(playerScore)).cint
+  scoreTextObj.x = (SCREEN_W div 2 - len($playerScore)).cint
   scoreTextObj.setPivot(0.5, 0.5)
 
   # positioning of letters on screen
@@ -206,8 +219,8 @@ proc registerHighscoreScene(scene: Scene, game: Game, tick: float) =
   mediumLeftTextObj.x = MIDDLE_UNDERSCORE_X - 30
   mediumLeftTextObj.y = SELECTED_UNDERSCORE_Y - 95
 
-  selectedTextObj.x = MIDDLE_UNDERSCORE_X + 30
-  selectedTextObj.y = SELECTED_UNDERSCORE_Y - 125
+  selectedTextObj.x = SELECTED_CHAR_X
+  selectedTextObj.y = SELECTED_CHAR_Y
 
   mediumRightTextObj.x = MIDDLE_UNDERSCORE_X + 110
   mediumRightTextObj.y = SELECTED_UNDERSCORE_Y - 95
@@ -225,6 +238,20 @@ proc updateHighscoreScene(scene: Scene, game: Game, tick: float) =
   let my: cint = game.mouse.y.cint
 
   if game.wasClicked():
+
+    if SELECTED_CHAR_X < mx and mx < SELECTED_CHAR_X + 60 and SELECTED_CHAR_Y < my and my < SELECTED_CHAR_Y + 100:
+      echo "clicked CHAR"
+      for index, initial in playerHighScoreEntry.initials:
+        if index < 3:
+          if playerHighScoreEntry.initials[index] == '\0':
+            playerInitials[index] = selectedIndex
+            playerHighScoreEntry.initials[index] = alphabet[selectedIndex][0].char
+            echo repr(playerHighScoreEntry.initials)
+            if index == 2:
+              writeNewHighScore(playerHighScoreEntry, HIGH_SCORES_DB)
+              game.sceneManager.enter("title")
+            else:
+              break
     # "50" is the width of the portion of the arrow texture and
     # "100" is the height 
     if ARROW_Y < my and my < ARROW_Y + 100:
@@ -280,9 +307,9 @@ proc renderHighscoreScene(scene: Scene, game: Game, tick: float) =
   game.renderUnderscore(rightUnderscoreObj)
   game.renderUnderscore(selectedUnderscoreObj)
 
-  firstEntererdTextObj.renderLetter(17)
-  secondEntererdTextObj.renderLetter(13)
-  thirdEntererdTextObj.renderLetter(12)
+  firstEntererdTextObj.renderEnteredInitial(playerInitials[0])
+  secondEntererdTextObj.renderEnteredInitial(playerInitials[1])
+  thirdEntererdTextObj.renderEnteredInitial(playerInitials[2])
 
   smallLeftTextObj.renderLetter(smallLeftIndex)
   mediumLeftTextObj.renderLetter(mediumLeftIndex)
