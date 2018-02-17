@@ -29,14 +29,17 @@ type
 const 
   CENTER_X = SCREEN_W div 2
   CENTER_Y = SCREEN_H div 2
-
-  LEFT_UNDERSCORE_X: cint = cint(CENTER_X * 0.8 - 55)
+  # "*_X" and "*_Y" = the top left upper corner of the destination Rect
+ 
   TOP_UNDERSCORES_Y: cint = cint(CENTER_Y)
+  LEFT_UNDERSCORE_X: cint = cint(CENTER_X * 0.8 - 55)
   SELECTED_UNDERSCORE_Y: cint = cint(CENTER_Y * 1.5)
-
   MIDDLE_UNDERSCORE_X: cint = cint(CENTER_X - 55)
-
   RIGHT_UNDERSCORE_X: cint = cint(CENTER_X * 1.2 - 55)
+  
+  ARROW_Y: cint = cint(CENTER_Y * 1.2)
+  LEFT_ARROW_X: cint = cint(LEFT_UNDERSCORE_X - 55)
+  RIGHT_ARROW_X: cint = cint(RIGHT_UNDERSCORE_X + 120)
 
 var
   arrowsTexture: TexturePtr
@@ -57,7 +60,11 @@ var
   selectedTextFont: FontPtr
 
 
-  currIndex: int = 2
+  smallLeftIndex: int = 0
+  mediumLeftIndex: int = 1
+  selectedIndex: int = 2
+  mediumRightIndex: int = 3
+  smallRightIndex: int = 4
 
   # scene text objects
   titleTextObj: TextObject
@@ -83,11 +90,11 @@ proc newArrowObject(renderer: RendererPtr, texture: TexturePtr, arrowType: Arrow
   case arrowType
   of leftArrow:
     result.src = rect(0,0,50,100)
-    result.dst = rect(cint(LEFT_UNDERSCORE_X - 55), cint(CENTER_Y * 1.2), 50, 100)
+    result.dst = rect(LEFT_ARROW_X, ARROW_Y, 50, 100)
   of rightArrow:
     result.src = rect(50,0,50,100)
     # TODO: figure out why this positioning does not *evenly* line up with the underscore objects
-    result.dst = rect(cint(RIGHT_UNDERSCORE_X + 120), cint(CENTER_Y * 1.2), 50, 100)
+    result.dst = rect(RIGHT_ARROW_X, ARROW_Y, 50, 100)
   else:
     raise SystemError.newException("Invalid arrow type supplied")
 
@@ -119,26 +126,7 @@ proc renderArrow(game: Game,arrowObj: ArrowObject ) =
   game.renderer.copy(arrowObj.texture, addr arrowObj.src, addr arrowObj.dst)
 
 proc renderLetter(textObj: TextObject, index: int) =
-
-  var modIndex: int = index
-  # small left letter = index - 2
-  # medium left letter = index - 1
-  # selected letter = index
-  # medium right letter = index + 1
-  # small right letter = index + 2
-
-  # if left arrow clicked then dec(index)
-  # if dec(indexOfAnyLetter) < 0 then indexOfAnyLetter = alphabet.len - 1
-
-  # if right arrow clicked then inc(index)
-  # if inc(indexOfAnyLetter) > alphabet.len - 1 then indexOfAnyLetter = 0
-
-  if (modIndex < 0):
-    modIndex = alphabet.len - 1
-  elif (modIndex > alphabet.len - 1):
-    modIndex = 0
-
-  textObj.setText(alphabet[modIndex])
+  textObj.setText(alphabet[index])
   textObj.render()
 
 proc registerHighscoreScene(scene: Scene, game: Game, tick: float) =
@@ -233,7 +221,49 @@ proc enterHighscoreScene(scene: Scene, game: Game, tick: float) =
 
 proc updateHighscoreScene(scene: Scene, game: Game, tick: float) =
   # called on game update proc
-  # if game.wasClicked():
+  let mx: cint = game.mouse.x.cint
+  let my: cint = game.mouse.y.cint
+
+  if game.wasClicked():
+    # "50" is the width of the portion of the arrow texture and
+    # "100" is the height 
+    if ARROW_Y < my and my < ARROW_Y + 100:
+      if LEFT_ARROW_X < mx and mx < LEFT_ARROW_X + 50:
+        # echo "clicked LEFT ARROW"
+        dec(smallLeftIndex)
+        if smallLeftIndex < 0:
+          smallLeftIndex = alphabet.len - 1
+        dec(mediumLeftIndex)
+        if mediumLeftIndex < 0:
+          mediumLeftIndex = alphabet.len - 1
+        dec(selectedIndex)
+        if selectedIndex < 0:
+          selectedIndex = alphabet.len - 1
+        dec(mediumRightIndex)
+        if mediumRightIndex < 0:
+          mediumRightIndex = alphabet.len - 1
+        dec(smallRightIndex)
+        if smallRightIndex < 0:
+          smallRightIndex = alphabet.len - 1
+
+      elif RIGHT_ARROW_X < mx and mx < RIGHT_ARROW_X + 50:
+        # echo "clicked RIGHT ARROW"
+        inc(smallLeftIndex)
+        if smallLeftIndex > alphabet.len - 1:
+          smallLeftIndex = 0
+        inc(mediumLeftIndex)
+        if mediumLeftIndex > alphabet.len - 1:
+          mediumLeftIndex = 0
+        inc(selectedIndex)
+        if selectedIndex > alphabet.len - 1:
+          selectedIndex = 0
+        inc(mediumRightIndex)
+        if mediumRightIndex > alphabet.len - 1:
+          mediumRightIndex = 0
+        inc(smallRightIndex)
+        if smallRightIndex > alphabet.len - 1:
+          smallRightIndex = 0
+
   #   game.sceneManager.enter("title")
   discard
 
@@ -250,15 +280,15 @@ proc renderHighscoreScene(scene: Scene, game: Game, tick: float) =
   game.renderUnderscore(rightUnderscoreObj)
   game.renderUnderscore(selectedUnderscoreObj)
 
-  firstEntererdTextObj.renderLetter(currIndex + 17)
-  secondEntererdTextObj.renderLetter(currIndex + 13)
-  thirdEntererdTextObj.renderLetter(currIndex + 12)
+  firstEntererdTextObj.renderLetter(17)
+  secondEntererdTextObj.renderLetter(13)
+  thirdEntererdTextObj.renderLetter(12)
 
-  smallLeftTextObj.renderLetter(currIndex - 2)
-  mediumLeftTextObj.renderLetter(currIndex - 1)
-  selectedTextObj.renderLetter(currIndex)
-  mediumRightTextObj.renderLetter(currIndex + 1)
-  smallRightTextObj.renderLetter(currIndex + 2)
+  smallLeftTextObj.renderLetter(smallLeftIndex)
+  mediumLeftTextObj.renderLetter(mediumLeftIndex)
+  selectedTextObj.renderLetter(selectedIndex)
+  mediumRightTextObj.renderLetter(mediumRightIndex)
+  smallRightTextObj.renderLetter(smallRightIndex)  
 
 proc exitHighscoreScene(scene: Scene, game: Game, tick: float) =
   # exit animation / leave Highscore scene here
