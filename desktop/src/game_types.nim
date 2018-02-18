@@ -68,6 +68,7 @@ type
     board: string
     coins: int
     lives: int
+    playerScore: uint32
     timer: int
 
   BoardEvent* = enum
