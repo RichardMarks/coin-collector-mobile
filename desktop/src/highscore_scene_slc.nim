@@ -309,6 +309,10 @@ proc destroyHighscoreScene(scene: Scene, game: Game, tick: float) =
   middleUnderscoreObj.texture.destroy()
   rightUnderscoreObj.texture.destroy()
 
+  smallTextFont.close()
+  mediumTextFont.close()
+  selectedTextFont.close()
+
 let highscoreSlc* = [
   registerHighscoreScene.SceneLifeCycleProc,
   enterHighscoreScene.SceneLifeCycleProc,

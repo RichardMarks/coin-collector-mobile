@@ -108,7 +108,8 @@ proc exitViewhighscoresScene(scene: Scene, game: Game, tick: float) =
 
 proc destroyViewhighscoresScene(scene: Scene, game: Game, tick: float) =
   # release assets here, like at game end
-  discard
+  scoreFont.close()
+  titleFont.close()
 
 let viewhighscoresSlc* = [
   registerViewhighscoresScene.SceneLifeCycleProc,
