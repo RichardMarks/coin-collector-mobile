@@ -53,7 +53,7 @@ proc setBoardCell*(game: Game, x: int, y: int, cell: char) =
   assert(position >= 0 and position < 100, "Cannot write cell outside of board boundaries")
   game.state.board[position] = cell
 
-proc getNextCell(game: Game): char =
+proc getNextCell(): char =
   ## determines what kind of cell will be uncovered - used internally by clickBoardCell
 
   let roll = nextRandom(0, 100).int
@@ -81,7 +81,7 @@ proc clickBoardCell*(game: Game, x: int, y: int): BoardEvent =
   let currentCell = game.getBoardCell(x, y)
 
   if currentCell == STONE_TILE:
-    let nextCell = game.getNextCell()
+    let nextCell = getNextCell()
     game.setBoardCell(x, y, nextCell)
     if nextCell == PIT_TILE:
       game.loseLife()

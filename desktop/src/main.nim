@@ -14,7 +14,7 @@ import game_types
 import scene_management
 from game_input import handleInput
 from game_state import getInitialState
-from scenes import titleScene, creditsScene, gameoverScene, playScene
+from scenes import titleScene, creditsScene, gameoverScene, playScene, debugroomScene
 
 from text_renderer import renderTextCached
 
@@ -35,12 +35,16 @@ proc newGame(renderer: RendererPtr): Game =
     titleScene,
     creditsScene,
     gameoverScene,
-    playScene
+    playScene,
+    debugroomScene
   ]:
     result.sceneManager.register(scene)
 
   # load the initial scene
-  result.sceneManager.enter("title")
+  when defined(debugroom):
+    result.sceneManager.enter("debugroom")
+  else:
+    result.sceneManager.enter("title")
 
 proc update(game: Game, tick: float) =
   let scene = game.sceneManager.current

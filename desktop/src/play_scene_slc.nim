@@ -145,7 +145,7 @@ proc updateGameTimer(game: Game, tick: float): bool =
 
 proc registerPlayScene(scene: Scene, game: Game, tick: float) =
   hudFont = openFont("../monofonto.ttf", 32)
-  sdlFailIf(hudFont.isNil): "Failed to load Imperator.ttf"
+  sdlFailIf(hudFont.isNil): "Failed to load monofonto.ttf"
 
   messageFont = openFont("../talacha.ttf", 64)
   sdlFailIf(messageFont.isNil): "Failed to load Imperator.ttf"
