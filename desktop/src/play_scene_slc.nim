@@ -1,6 +1,8 @@
 import sdl2, sdl2.ttf, sdl2.image
+import Math
 import game_types
 import scene_management
+import particle_system
 
 import text_renderer
 from game_input import wasClicked
@@ -305,6 +307,12 @@ proc renderPlayScene(scene: Scene, game: Game, tick: float) =
   game.renderer.setDrawColor(r = 0x20, g = 0x20, b = 0x40)
   game.renderer.fillRect(unsafeAddr backingRect)
   game.renderer.setDrawColor(r = 0x50, g = 0x50, b = 0x90)
+
+  game.renderer.setDrawColor( YELLOW)
+  game.renderer.drawParticle(100.float32, 100.float32, 20, YELLOW)
+  game.renderer.drawParticle(140.float32, 160.float32, 20, YELLOW)
+  game.renderer.setDrawColor(r = 0x50, g = 0x50, b = 0x90)
+
   case playMode
   of starting: renderStartingPlayMode(scene, game, tick)
   of playing: renderPlayingPlayMode(scene, game, tick)
