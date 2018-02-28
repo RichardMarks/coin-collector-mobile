@@ -4,7 +4,7 @@ import scene_management
 
 import text_renderer
 from game_input import wasClicked
-from game_state import getBoardCell, clickBoardCell, resetBoardState, STONE_TILE, DIRT_TILE, PIT_TILE, COIN_TILE
+from game_state import getBoardCell, getStoneCell,clickBoardCell, resetBoardState, STONE_TILE, DIRT_TILE, PIT_TILE, COIN_TILE
 
 # this creates a gap between the tiles of the board when rendering
 const XADJUSTMENT: cint = 3
@@ -79,9 +79,27 @@ proc renderBoardStatic(game: Game, tick: float) =
       var clip = cell.getTileClip()
       var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT)), TILE_WIDTH, TILE_HEIGHT)
       game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
+  
+    for x in 0..BOARD_XLIMIT:
+      let cell = game.getStoneCell(x, y)
+      if cell == STONE_TILE:
+        var clip = cell.getTileClip()
+        var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT)), TILE_WIDTH, TILE_HEIGHT)
+        game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
 
 proc renderBoardAnimated(game: Game, tick: float) =
   # TODO: implement board building animation
+
+  # 1. need an array of y values local to play scene
+  # 2. on game start, initialize all y values in that array as on line #80
+  # 3. need another array of y values local to play scene
+  # 4. initalize all values to a y value less than 0 (off screen)
+  # 4. These values are going to be updated over time and rendered within this procedure
+
+  # update = speed value * dt
+  # if y value >= y value of dest then y value = y value of dest and stops moving
+  
+
   renderBoardStatic(game, tick)
 
 proc renderDimmer(game: Game) =
@@ -125,7 +143,7 @@ proc handleBoardUpdate(game: Game, mx, my: cint) =
   of BoardEvent.takeCoin: handleTakeCoinBoardEvent(game, mx, my)
   else: discard
 
-  if game.state.board.contains('S') == false:
+  if game.state.stones.contains('S') == false:
     echo "all tiles flipped, need to reset the board"
     game.resetBoardState()
 

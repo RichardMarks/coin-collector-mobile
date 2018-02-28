@@ -66,6 +66,7 @@ type
 
   GameState* = tuple
     board: string
+    stones: string
     coins: int
     lives: int
     playerScore: uint32
