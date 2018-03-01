@@ -4,7 +4,7 @@ import scene_management
 
 import text_renderer
 from game_input import wasClicked
-from game_state import getBoardCell, getStoneCell,clickBoardCell, resetBoardState, STONE_TILE, DIRT_TILE, PIT_TILE, COIN_TILE
+from game_state import nextRandom, getBoardCell, getStoneCell,clickBoardCell, resetBoardState, STONE_TILE, DIRT_TILE, PIT_TILE, COIN_TILE
 
 # this creates a gap between the tiles of the board when rendering
 const XADJUSTMENT: cint = 3
@@ -54,8 +54,56 @@ var
   pauseFlashTime: float = 0
   pauseShow: bool = true
   gameTime: float = 0
+  boardReady: bool = false
+
+  stoneYValues: array[100, float]
+  stoneDestinationYValues: array[100, cint]
+  currentStoneIndex: int
+  stonesNotYetPlaced: seq[int]
+
+const STONE_DROP_SPEED: float = 10000
 
 # element specific procedures
+
+proc initStoneYValues() =
+  stonesNotYetPlaced = @[]
+  currentStoneIndex = 0
+  for i in 0..<100:
+    stoneYValues[i] = -TILE_HEIGHT
+    stonesNotYetPlaced.add(i)
+  for y in 0..<10:
+    for x in 0..<10:
+      var
+        i: int = x + y * 10
+        py: cint = BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT))
+      stoneDestinationYValues[i] = py
+
+proc shuffleUnplacedStoneIndices() =
+  for i in countdown(stonesNotYetPlaced.high, 1):
+    swap(stonesNotYetPlaced[i], stonesNotYetPlaced[nextRandom(0'u32, uint32(i + 1)).int])
+
+proc nextStoneIndex(): int =
+  shuffleUnplacedStoneIndices()
+  result = stonesNotYetPlaced[0]
+
+proc moveCurrentStone(dt: float) =
+  if boardReady: return
+
+  var
+    current: float = stoneYValues[currentStoneIndex]
+    target: cint = stoneDestinationYValues[currentStoneIndex]
+  current += STONE_DROP_SPEED * dt
+
+  if current.cint >= target and stonesNotYetPlaced.contains(currentStoneIndex):
+    current = target.float
+    stoneYValues[currentStoneIndex] = current
+    stonesNotYetPlaced.delete(0)
+    if stonesNotYetPlaced.len == 0:
+      boardReady = true
+    else:
+      currentStoneIndex = nextStoneIndex()
+  else:
+    stoneYValues[currentStoneIndex] = current
 
 proc renderButton(textObj: TextObject, matchActive: PlayButton) =
   if matchActive == activeButton:
@@ -79,7 +127,7 @@ proc renderBoardStatic(game: Game, tick: float) =
       var clip = cell.getTileClip()
       var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT)), TILE_WIDTH, TILE_HEIGHT)
       game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
-  
+
     for x in 0..BOARD_XLIMIT:
       let cell = game.getStoneCell(x, y)
       if cell == STONE_TILE:
@@ -98,9 +146,21 @@ proc renderBoardAnimated(game: Game, tick: float) =
 
   # update = speed value * dt
   # if y value >= y value of dest then y value = y value of dest and stops moving
-  
 
-  renderBoardStatic(game, tick)
+  for y in 0..BOARD_YLIMIT:
+    for x in 0..BOARD_XLIMIT:
+      let cell = game.getBoardCell(x, y)
+      var clip = cell.getTileClip()
+      var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), BOARD_Y + cint(y * (Y_SPACE + YADJUSTMENT)), TILE_WIDTH, TILE_HEIGHT)
+      game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
+
+    for x in 0..BOARD_XLIMIT:
+      let cell = game.getStoneCell(x, y)
+      var clip = cell.getTileClip()
+      var destY: cint = stoneYValues[x + y * 10].cint
+      var dest = rect(BOARD_X + cint(x * (TILE_WIDTH + XADJUSTMENT)), destY, TILE_WIDTH, TILE_HEIGHT)
+      game.renderer.copy(tilesTexture, unsafeAddr clip, unsafeAddr dest)
+
 
 proc renderDimmer(game: Game) =
   dimmerTexture.setTextureAlphaMod(120)
@@ -126,8 +186,8 @@ proc handleFoundCoinBoardEvent(game: Game, mx, my: cint) = discard
 
 proc handleTakeCoinBoardEvent(game: Game, mx, my: cint) =
   var label: string = "Score: " & $game.state.coins
-  echo game.state.coins
-  echo label
+  # echo game.state.coins
+  # echo label
   hudScoreText.setText(label)
 
 proc handleBoardUpdate(game: Game, mx, my: cint) =
@@ -250,12 +310,15 @@ proc enterPlayScene(scene: Scene, game: Game, tick: float) =
   hudTimeText.setText("Time: 60")
   hudScoreText.setText("Score: 0")
   hudLivesText.setText("Lives: 3")
+  boardReady = false
+  initStoneYValues()
 
 proc exitPlayScene(scene: Scene, game: Game, tick: float) =
   discard
 
 proc updateStartingPlayMode(scene: Scene, game: Game, tick: float) =
-  if game.wasClicked():
+  moveCurrentStone(tick)
+  if boardReady and game.wasClicked():
     playMode = PlayMode.playing
 
 proc updatePlayingPlayMode(scene: Scene, game: Game, tick: float) =
@@ -296,8 +359,9 @@ proc updatePausedPlayMode(scene: Scene, game: Game, tick: float) =
 proc renderStartingPlayMode(scene: Scene, game: Game, tick: float) =
   renderBoardAnimated(game, tick)
   renderHUD(game, tick)
-  renderDimmer(game)
-  startText.render()
+  if boardReady:
+    renderDimmer(game)
+    startText.render()
 
 proc renderPlayingPlayMode(scene: Scene, game: Game, tick: float) =
   renderBoardStatic(game, tick)
